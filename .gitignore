@@ -1,0 +1,28 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build output
+dist/
+dist-ssr/
+
+# env files — never commit secrets
+.env
+.env.local
+.env.*.local
+
+# editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Vite
+*.local
