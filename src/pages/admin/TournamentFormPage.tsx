@@ -97,8 +97,9 @@ export function TournamentFormPage() {
         notes,
         date:         null,
         course:       null,
-        course_rating: null,
-        status:       'upcoming',
+        course_rating:  null,
+        status:         'upcoming',
+        bucks_awarded:  false,
       })
     }
     navigate(`/admin/seasons/${seasonId}`)

@@ -4,6 +4,7 @@ interface PlayerAvatarProps {
   color: string
   avatarUrl?: string | null
   size?: 'sm' | 'md' | 'lg'
+  frame?: string | null  // frame key e.g. 'gold', 'fire'
 }
 
 const sizes = {
@@ -12,20 +13,27 @@ const sizes = {
   lg: 'w-14 h-14 text-lg',
 }
 
-export function PlayerAvatar({ name, initials, color, avatarUrl, size = 'md' }: PlayerAvatarProps) {
+function frameClass(frame: string | null | undefined): string {
+  if (!frame) return ''
+  return `avatar-frame-${frame}`
+}
+
+export function PlayerAvatar({ name, initials, color, avatarUrl, size = 'md', frame }: PlayerAvatarProps) {
+  const fc = frameClass(frame)
+
   if (avatarUrl) {
     return (
       <img
         src={avatarUrl}
         alt={name}
-        className={`${sizes[size]} rounded-full object-cover border-2 border-white/25`}
+        className={`${sizes[size]} rounded-full object-cover border-2 border-white/25 ${fc}`}
       />
     )
   }
 
   return (
     <div
-      className={`${sizes[size]} rounded-full flex items-center justify-center font-sans font-bold border-2 border-white/25`}
+      className={`${sizes[size]} rounded-full flex items-center justify-center font-sans font-bold border-2 border-white/25 ${fc}`}
       style={{ backgroundColor: color, color: '#fff' }}
     >
       {initials}

@@ -32,16 +32,26 @@ export function PlayersPage() {
                   initials={p.initials}
                   color={p.color}
                   avatarUrl={p.avatar_url}
+                  frame={p.active_frame}
                   size="lg"
                 />
               </div>
               <p className="font-serif text-base text-green-dark">{p.name}</p>
+              {p.active_title && (
+                <p className="font-sans text-[11px] text-gold font-medium mt-0.5">{p.active_title}</p>
+              )}
               {p.home_course && (
                 <p className="font-sans text-xs text-green-mid mt-0.5">{p.home_course}</p>
               )}
               {p.bio && (
                 <p className="font-sans text-xs text-green-mid/70 mt-1 line-clamp-2">{p.bio}</p>
               )}
+              <div className="mt-2 pt-2 border-t border-green-pale">
+                <p className="font-sans text-xs text-green-mid">
+                  <span className="text-gold font-bold">{p.bagal_bucks.toLocaleString()}</span>
+                  {' '}BAGAL Bucks
+                </p>
+              </div>
             </Card>
           ))}
         </div>

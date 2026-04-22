@@ -23,6 +23,9 @@ export interface Player {
   bio: string | null
   home_course: string | null
   bag: BagContents
+  bagal_bucks: number
+  active_title: string | null
+  active_frame: string | null
   created_at: string
 }
 
@@ -61,6 +64,7 @@ export interface Tournament {
   points_3rd: number
   sort_order: number
   notes: string | null
+  bucks_awarded: boolean
   created_at: string
 }
 
@@ -97,4 +101,21 @@ export interface PersonalRound {
   par: number | null
   notes: string | null
   created_at: string
+}
+
+export interface BucksTransaction {
+  id: string
+  player_id: string
+  amount: number
+  reason: string
+  created_at: string
+}
+
+export interface PlayerItem {
+  id: string
+  player_id: string
+  item_id: string
+  item_type: 'title' | 'frame'
+  item_name: string
+  purchased_at: string
 }

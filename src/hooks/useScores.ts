@@ -71,6 +71,9 @@ export function useUpsertScores() {
         .update({ status: 'completed' })
         .eq('id', tournamentId)
       if (tErr) throw tErr
+
+      // Award BAGAL Bucks (idempotent — safe to call on re-save)
+      await supabase.rpc('award_tournament_bucks', { p_tournament_id: tournamentId })
     },
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ['scores', 'tournament', vars.tournamentId] })
