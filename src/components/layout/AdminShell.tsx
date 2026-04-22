@@ -13,6 +13,7 @@ function FlagIcon() {
 const navItems = [
   { to: '/admin/seasons', label: 'Seasons & Tournaments' },
   { to: '/admin/players', label: 'Players' },
+  { to: '/admin/accounts', label: 'Accounts' },
 ]
 
 export function AdminShell() {

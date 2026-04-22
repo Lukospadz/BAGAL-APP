@@ -17,6 +17,7 @@ import { SeasonDetailAdminPage } from '@/pages/admin/SeasonDetailAdminPage'
 import { TournamentFormPage } from '@/pages/admin/TournamentFormPage'
 import { ScoreEntryPage } from '@/pages/admin/ScoreEntryPage'
 import { CasualRoundsPage } from '@/pages/admin/CasualRoundsPage'
+import { AccountsAdminPage } from '@/pages/admin/AccountsAdminPage'
 
 // Player self-service pages
 import { ProfilePage } from '@/pages/ProfilePage'
@@ -44,6 +45,7 @@ export default function App() {
         <Route element={<AdminShell />}>
           <Route index element={<Navigate to="seasons" replace />} />
           <Route path="players" element={<PlayersAdminPage />} />
+          <Route path="accounts" element={<AccountsAdminPage />} />
           <Route path="seasons" element={<SeasonsAdminPage />} />
           <Route path="seasons/:seasonId" element={<SeasonDetailAdminPage />} />
           <Route path="seasons/:seasonId/tournaments/new" element={<TournamentFormPage />} />

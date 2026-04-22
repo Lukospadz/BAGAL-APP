@@ -6,8 +6,8 @@ import { usePlayerItems, useBuyShopItem, useEquipItem, useUnequipItem } from '@/
 import { PlayerAvatar } from '@/components/ui/PlayerAvatar'
 import { StarRating } from '@/components/ui/StarRating'
 import { Card } from '@/components/ui/Card'
-import { FRAME_ITEMS, TITLE_ITEMS } from '@/lib/shop'
-import type { ShopItem } from '@/lib/shop'
+import { FRAME_ITEMS, TITLE_ITEMS, TIER_META, TIER_ORDER } from '@/lib/shop'
+import type { ShopItem, ItemTier } from '@/lib/shop'
 
 // ─── Tab types ────────────────────────────────────────────────────────────────
 type Tab = 'greenbook' | 'shop' | 'info'
@@ -202,79 +202,142 @@ function ShopSection({ playerId, bucks }: { playerId: string; bucks: number }) {
     }
   }
 
+  // Group items by tier for prettier display
+  const grouped: Record<ItemTier, ShopItem[]> = { legendary: [], epic: [], rare: [], common: [] }
+  for (const item of items) grouped[item.tier].push(item)
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="font-sans text-sm text-green-mid">
-          Balance: <span className="text-gold font-bold text-base">{bucks.toLocaleString()} BB</span>
-        </p>
-        <div className="flex gap-1 bg-green-faint rounded-lg p-1">
-          {(['titles', 'frames'] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setShopTab(t)}
-              className={[
-                'font-sans text-xs px-3 py-1 rounded-md transition-all',
-                shopTab === t ? 'bg-green-dark text-cream' : 'text-green-mid hover:text-green-dark',
-              ].join(' ')}
-            >
-              {t === 'titles' ? 'Titles' : 'Frames'}
-            </button>
-          ))}
+      {/* Balance banner */}
+      <Card className="p-4 bg-gradient-to-br from-green-dark to-green-mid text-cream border-0">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-sans text-[10px] tracking-widest uppercase text-cream/60">Your balance</p>
+            <p className="font-serif text-2xl text-gold-light">
+              {bucks.toLocaleString()} <span className="text-sm text-cream/70">BAGAL Bucks</span>
+            </p>
+          </div>
+          <div className="flex gap-1 bg-black/20 rounded-lg p-1">
+            {(['titles', 'frames'] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setShopTab(t)}
+                className={[
+                  'font-sans text-xs px-3 py-1.5 rounded-md transition-all',
+                  shopTab === t ? 'bg-cream text-green-dark font-medium' : 'text-cream/70 hover:text-cream',
+                ].join(' ')}
+              >
+                {t === 'titles' ? 'Titles' : 'Frames'}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      </Card>
 
       {buyItem.isError && (
         <p className="font-sans text-xs text-red-600">{String(buyItem.error)}</p>
       )}
 
-      <div className="grid gap-2">
-        {items.map((item) => {
-          const isOwned = owned.has(item.id)
-          const equipped = isEquipped(item)
-          const canAfford = bucks >= item.price
-          return (
-            <Card key={item.id} className={`p-3 flex items-center gap-3 ${equipped ? 'ring-1 ring-gold' : ''}`}>
-              {item.type === 'frame' && item.frameKey && (
-                <div className={`w-8 h-8 rounded-full bg-green-dark flex-shrink-0 avatar-frame-${item.frameKey}`} />
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="font-serif text-sm text-green-dark">{item.name}</p>
-                {item.description && (
-                  <p className="font-sans text-xs text-green-mid">{item.description}</p>
-                )}
-                {equipped && (
-                  <p className="font-sans text-[10px] text-gold font-medium tracking-widest uppercase">Equipped</p>
-                )}
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                {!isOwned && (
-                  <span className={`font-sans text-xs font-medium ${canAfford ? 'text-gold' : 'text-green-pale'}`}>
-                    {item.price} BB
-                  </span>
-                )}
-                {isOwned ? (
-                  <button
-                    onClick={() => handleEquip(item)}
-                    disabled={equipItem.isPending || unequipItem.isPending}
-                    className={equipped ? 'btn-ghost text-xs py-1 px-3' : 'btn-primary text-xs py-1 px-3'}
+      {TIER_ORDER.map((tier) => {
+        const tierItems = grouped[tier]
+        if (!tierItems.length) return null
+        const meta = TIER_META[tier]
+
+        return (
+          <div key={tier}>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex-1 h-px bg-green-pale" />
+              <span
+                className={`font-sans text-[11px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full border ${meta.badge}`}
+              >
+                {meta.label}
+              </span>
+              <div className="flex-1 h-px bg-green-pale" />
+            </div>
+
+            <div className="grid gap-2">
+              {tierItems.map((item) => {
+                const isOwned = owned.has(item.id)
+                const equipped = isEquipped(item)
+                const canAfford = bucks >= item.price
+                return (
+                  <Card
+                    key={item.id}
+                    className={[
+                      'p-3 flex items-center gap-3 transition-all relative overflow-hidden',
+                      equipped ? `ring-2 ${meta.ring}` : '',
+                      isOwned && !equipped ? 'bg-green-faint/50' : '',
+                    ].join(' ')}
                   >
-                    {equipped ? 'Unequip' : 'Equip'}
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleBuy(item)}
-                    disabled={!canAfford || buyItem.isPending}
-                    className="btn-primary text-xs py-1 px-3"
-                  >
-                    Buy
-                  </button>
-                )}
-              </div>
-            </Card>
-          )
-        })}
-      </div>
+                    {/* Left accent bar coloured by tier */}
+                    <div
+                      className={[
+                        'absolute left-0 top-0 bottom-0 w-1',
+                        tier === 'legendary' ? 'bg-amber-400' : '',
+                        tier === 'epic'      ? 'bg-purple-400' : '',
+                        tier === 'rare'      ? 'bg-sky-400'    : '',
+                        tier === 'common'    ? 'bg-slate-300'  : '',
+                      ].join(' ')}
+                    />
+
+                    {/* Icon: frame preview or title emblem */}
+                    {item.type === 'frame' && item.frameKey ? (
+                      <div
+                        className={`w-10 h-10 rounded-full bg-green-dark flex-shrink-0 ml-2 avatar-frame-${item.frameKey}`}
+                      />
+                    ) : (
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ml-2 ${meta.badge} border-2`}>
+                        <span className="font-serif text-base">
+                          {tier === 'legendary' ? '★' : tier === 'epic' ? '◆' : tier === 'rare' ? '●' : '○'}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="flex-1 min-w-0">
+                      <p className={`font-serif text-sm ${tier === 'legendary' ? 'text-amber-700 font-medium' : 'text-green-dark'}`}>
+                        {item.name}
+                      </p>
+                      {item.description && (
+                        <p className="font-sans text-xs text-green-mid/80">{item.description}</p>
+                      )}
+                      {equipped && (
+                        <p className={`font-sans text-[10px] font-bold tracking-widest uppercase ${meta.color}`}>
+                          Equipped
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {!isOwned && (
+                        <span className={`font-sans text-xs font-medium ${canAfford ? 'text-gold' : 'text-green-pale'}`}>
+                          {item.price.toLocaleString()} BB
+                        </span>
+                      )}
+                      {isOwned ? (
+                        <button
+                          onClick={() => handleEquip(item)}
+                          disabled={equipItem.isPending || unequipItem.isPending}
+                          className={equipped ? 'btn-ghost text-xs py-1 px-3' : 'btn-primary text-xs py-1 px-3'}
+                        >
+                          {equipped ? 'Unequip' : 'Equip'}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleBuy(item)}
+                          disabled={!canAfford || buyItem.isPending}
+                          className="btn-primary text-xs py-1 px-3"
+                        >
+                          Buy
+                        </button>
+                      )}
+                    </div>
+                  </Card>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
