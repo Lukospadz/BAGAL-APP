@@ -149,7 +149,7 @@ export function ScoreEntryPage() {
 
           <div>
             <label className="field-label">Course rating</label>
-            <StarRating value={courseRating} onChange={setCourseRating} symbol="⛳" />
+            <StarRating value={courseRating} onChange={setCourseRating} />
           </div>
 
           <div>

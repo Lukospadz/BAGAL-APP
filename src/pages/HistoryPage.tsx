@@ -52,7 +52,7 @@ function TournamentHistoryCard({
           )}
         </div>
         {tournament.course_rating != null && tournament.course_rating > 0 && (
-          <StarRating value={tournament.course_rating} symbol="⛳" />
+          <StarRating value={tournament.course_rating} />
         )}
       </div>
 

@@ -129,7 +129,7 @@ export function TournamentsPage() {
                   <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
                     <StatusPill status={t.status} />
                     {t.course_rating != null && t.course_rating > 0 && (
-                      <StarRating value={t.course_rating} symbol="⛳" />
+                      <StarRating value={t.course_rating} />
                     )}
                   </div>
                 </div>
