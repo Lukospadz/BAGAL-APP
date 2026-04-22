@@ -37,7 +37,9 @@ export default function App() {
 
       {/* Player self-service (authenticated, any role) */}
       <Route element={<PlayerRoute />}>
-        <Route path="profile" element={<ProfilePage />} />
+        <Route element={<PublicLayout />}>
+          <Route path="profile" element={<ProfilePage />} />
+        </Route>
       </Route>
 
       {/* Admin routes */}

@@ -19,21 +19,21 @@ export function SiteHeader() {
   const seasonLabel = season ? season.name : 'BAGAL'
 
   return (
-    <div className="bg-green-dark text-cream text-center pt-5 px-4 pb-0">
-      <div className="flex items-center justify-center gap-2 mb-1">
+    <div className="bg-green-dark text-cream text-center pt-4 px-4 pb-0">
+      <div className="flex items-center justify-center gap-2 mb-0.5">
         <FlagIcon />
-        <span className="font-sans text-[11px] tracking-[0.14em] uppercase text-cream/60">
+        <span className="font-sans text-[10px] tracking-[0.16em] uppercase text-cream/50">
           Below Average Golfers Association League
         </span>
         <FlagIcon flip />
       </div>
 
-      <h1 className="font-serif text-[28px] font-normal leading-tight tracking-[0.02em]">
+      <h1 className="font-serif text-[26px] font-normal leading-tight tracking-[0.02em]">
         BAGAL{' '}
         <em className="not-italic text-gold-light">{seasonLabel}</em>
       </h1>
 
-      <p className="font-sans text-[11px] tracking-[0.06em] uppercase text-cream/50 mt-1 mb-4">
+      <p className="font-sans text-[10px] tracking-[0.08em] uppercase text-cream/40 mt-0.5 mb-3">
         Luke &bull; Alex &bull; Peter &bull; Est.&nbsp;Year&nbsp;1
       </p>
 

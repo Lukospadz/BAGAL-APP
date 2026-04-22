@@ -15,7 +15,9 @@ const sizes = {
 
 function frameClass(frame: string | null | undefined): string {
   if (!frame) return ''
-  return `avatar-frame-${frame}`
+  // active_frame stores the item ID (e.g. "frame_gold"); CSS classes use just the key ("gold")
+  const key = frame.replace(/^frame_/, '')
+  return `avatar-frame-${key}`
 }
 
 export function PlayerAvatar({ name, initials, color, avatarUrl, size = 'md', frame }: PlayerAvatarProps) {

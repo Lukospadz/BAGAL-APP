@@ -5,7 +5,7 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export function Card({ variant = 'default', className = '', ...props }: CardProps) {
-  const base = 'rounded-lg border border-green-pale shadow-card'
+  const base = 'rounded-xl border border-green-pale shadow-card'
   const variants = {
     default: 'bg-white',
     tinted:  'bg-green-faint',

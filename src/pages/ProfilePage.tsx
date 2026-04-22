@@ -400,20 +400,19 @@ export function ProfilePage() {
 
   if (authLoading) {
     return (
-      <div className="max-w-lg mx-auto p-4">
-        <div className="h-24 bg-green-pale/50 rounded-xl animate-pulse mb-4" />
+      <div className="p-4">
+        <div className="h-28 bg-green-dark/10 rounded-xl animate-pulse mb-4" />
       </div>
     )
   }
 
   if (!playerId) {
     return (
-      <div className="max-w-lg mx-auto p-4">
+      <div className="p-4">
         <Card className="p-6 text-center">
           <p className="font-serif text-base text-green-dark mb-2">Not linked to a player yet</p>
           <p className="font-sans text-sm text-green-mid">
-            Your account needs to be linked to one of the BAGAL players.
-            Ask an admin (or run the SQL snippet yourself).
+            Your account needs to be linked to one of the BAGAL players by an admin.
           </p>
         </Card>
       </div>
@@ -422,8 +421,8 @@ export function ProfilePage() {
 
   if (playerLoading || !player) {
     return (
-      <div className="max-w-lg mx-auto p-4">
-        <div className="h-24 bg-green-pale/50 rounded-xl animate-pulse mb-4" />
+      <div className="p-4">
+        <div className="h-28 bg-green-dark/10 rounded-xl animate-pulse mb-4" />
       </div>
     )
   }
@@ -435,40 +434,43 @@ export function ProfilePage() {
   ]
 
   return (
-    <div className="max-w-lg mx-auto p-4 pt-2">
-      {/* Player header */}
-      <Card className="p-4 mb-4">
-        <div className="flex items-center gap-4">
-          <PlayerAvatar
-            name={player.name}
-            initials={player.initials}
-            color={player.color}
-            avatarUrl={player.avatar_url}
-            frame={player.active_frame}
-            size="lg"
-          />
-          <div className="flex-1 min-w-0">
-            <p className="font-serif text-lg text-green-dark">{player.name}</p>
-            {player.active_title && (
-              <p className="font-sans text-xs text-gold font-medium">{player.active_title}</p>
-            )}
-            <p className="font-sans text-sm text-green-mid mt-0.5">
-              <span className="text-gold font-bold">{player.bagal_bucks.toLocaleString()}</span>
-              <span className="text-green-mid/70"> BAGAL Bucks</span>
-            </p>
-          </div>
+    <div className="p-4 pt-3">
+      {/* Player header — dark gradient banner */}
+      <div className="bg-gradient-to-br from-green-dark to-green-mid rounded-xl p-5 mb-4 flex items-center gap-4">
+        <PlayerAvatar
+          name={player.name}
+          initials={player.initials}
+          color={player.color}
+          avatarUrl={player.avatar_url}
+          frame={player.active_frame}
+          size="lg"
+        />
+        <div className="flex-1 min-w-0">
+          <p className="font-serif text-xl text-cream leading-tight">{player.name}</p>
+          {player.active_title && (
+            <p className="font-sans text-xs text-gold-light font-medium mt-0.5">{player.active_title}</p>
+          )}
+          <p className="font-sans text-sm text-cream/60 mt-2">
+            <span className="text-gold-light font-bold text-base">
+              {player.bagal_bucks.toLocaleString()}
+            </span>
+            {' '}
+            <span className="text-[11px] tracking-widest uppercase">BAGAL Bucks</span>
+          </p>
         </div>
-      </Card>
+      </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-green-faint rounded-lg p-1 mb-4">
+      <div className="flex gap-1 bg-green-dark/8 border border-green-pale rounded-xl p-1 mb-4">
         {TABS.map((t) => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
             className={[
-              'flex-1 font-sans text-xs py-1.5 rounded-md transition-all',
-              tab === t.key ? 'bg-green-dark text-cream' : 'text-green-mid hover:text-green-dark',
+              'flex-1 font-sans text-xs py-2 rounded-lg transition-all',
+              tab === t.key
+                ? 'bg-green-dark text-cream shadow-sm'
+                : 'text-green-mid hover:text-green-dark hover:bg-green-faint',
             ].join(' ')}
           >
             {t.label}

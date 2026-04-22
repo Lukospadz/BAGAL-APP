@@ -4,7 +4,7 @@ import { PublicNav } from './PublicNav'
 
 export function PublicLayout() {
   return (
-    <div className="max-w-[720px] mx-auto pb-20">
+    <div className="max-w-[720px] mx-auto min-h-dvh pb-20">
       <SiteHeader />
       <PublicNav />
       <main>

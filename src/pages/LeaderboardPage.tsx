@@ -34,6 +34,7 @@ function PodiumCard({ standing, position }: { standing: PlayerStanding; position
           initials={standing.player.initials}
           color={standing.player.color}
           avatarUrl={standing.player.avatar_url}
+          frame={standing.player.active_frame}
           size={isFirst ? 'lg' : 'md'}
         />
       </div>
@@ -80,6 +81,7 @@ function HallOfFame() {
                   initials={champion.initials}
                   color={champion.color}
                   avatarUrl={champion.avatar_url}
+                  frame={champion.active_frame}
                   size="sm"
                 />
               )}
