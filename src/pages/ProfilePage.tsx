@@ -330,16 +330,15 @@ function InfoSection({ playerId }: { playerId: string }) {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export function ProfilePage() {
-  const { profile } = useAuth()
+  const { profile, loading: authLoading } = useAuth()
   const playerId = profile?.player_id ?? undefined
-  const { data: player, isLoading } = usePlayer(playerId)
+  const { data: player, isLoading: playerLoading } = usePlayer(playerId)
   const [tab, setTab] = useState<Tab>('greenbook')
 
-  if (isLoading || !player) {
+  if (authLoading) {
     return (
       <div className="max-w-lg mx-auto p-4">
         <div className="h-24 bg-green-pale/50 rounded-xl animate-pulse mb-4" />
-        <div className="h-8 bg-green-pale/50 rounded animate-pulse" />
       </div>
     )
   }
@@ -347,7 +346,21 @@ export function ProfilePage() {
   if (!playerId) {
     return (
       <div className="max-w-lg mx-auto p-4">
-        <p className="font-sans text-sm text-green-mid">Your account isn't linked to a player yet. Ask an admin.</p>
+        <Card className="p-6 text-center">
+          <p className="font-serif text-base text-green-dark mb-2">Not linked to a player yet</p>
+          <p className="font-sans text-sm text-green-mid">
+            Your account needs to be linked to one of the BAGAL players.
+            Ask an admin (or run the SQL snippet yourself).
+          </p>
+        </Card>
+      </div>
+    )
+  }
+
+  if (playerLoading || !player) {
+    return (
+      <div className="max-w-lg mx-auto p-4">
+        <div className="h-24 bg-green-pale/50 rounded-xl animate-pulse mb-4" />
       </div>
     )
   }
