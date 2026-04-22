@@ -37,12 +37,20 @@ export function SeasonDetailAdminPage() {
           <h2 className="font-serif text-xl text-green-dark">{season.name}</h2>
           <StatusPill status={season.status} />
         </div>
-        <Link
-          to={`/admin/seasons/${seasonId}/tournaments/new`}
-          className="btn-primary text-sm"
-        >
-          + Add tournament
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            to={`/admin/seasons/${seasonId}/casual-rounds`}
+            className="btn-ghost text-sm"
+          >
+            Casual rounds
+          </Link>
+          <Link
+            to={`/admin/seasons/${seasonId}/tournaments/new`}
+            className="btn-primary text-sm"
+          >
+            + Add tournament
+          </Link>
+        </div>
       </div>
 
       {tournsLoading ? (
@@ -80,6 +88,12 @@ export function SeasonDetailAdminPage() {
                   )}
                 </div>
                 <div className="flex gap-2 flex-shrink-0">
+                  <Link
+                    to={`/admin/seasons/${seasonId}/tournaments/${t.id}/scores`}
+                    className="btn-primary text-xs py-1 px-3"
+                  >
+                    {t.status === 'completed' ? 'Edit scores' : 'Enter scores'}
+                  </Link>
                   <Link
                     to={`/admin/seasons/${seasonId}/tournaments/${t.id}`}
                     className="btn-ghost text-xs py-1 px-3"
