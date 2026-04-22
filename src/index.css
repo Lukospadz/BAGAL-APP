@@ -44,6 +44,11 @@
   body {
     @apply bg-cream text-green-dark font-serif;
     min-height: 100dvh;
+    /* Subtle paper texture */
+    background-image:
+      radial-gradient(ellipse at top left, rgba(26,61,31,0.025), transparent 60%),
+      radial-gradient(ellipse at bottom right, rgba(201,168,76,0.03), transparent 60%);
+    background-attachment: fixed;
   }
 }
 

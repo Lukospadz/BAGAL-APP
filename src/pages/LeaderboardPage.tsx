@@ -9,25 +9,40 @@ import { usePlayers } from '@/hooks/usePlayers'
 import { useSeasons } from '@/hooks/useSeasons'
 import type { PlayerStanding } from '@/lib/scoring'
 
-const MEDALS = ['1st', '2nd', '3rd']
+const MEDAL_META = [
+  { label: '1st', emoji: '🥇', accent: '#c9a84c' }, // gold
+  { label: '2nd', emoji: '🥈', accent: '#a8b3c0' }, // silver
+  { label: '3rd', emoji: '🥉', accent: '#b87333' }, // bronze
+]
 
 function PodiumCard({ standing, position }: { standing: PlayerStanding; position: number }) {
   const isFirst = position === 0
+  const meta = MEDAL_META[position]
   return (
     <div
       className={[
         'rounded-xl p-4 text-center text-cream relative overflow-hidden',
         isFirst
-          ? 'bg-gradient-to-b from-green-dark to-green-mid'
+          ? 'bg-gradient-to-b from-green-dark to-green-mid ring-1 ring-gold/40'
           : 'bg-green-dark',
       ].join(' ')}
     >
-      {isFirst && (
-        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gold" />
-      )}
-      <p className="font-sans text-[11px] tracking-widest uppercase text-cream/50 mb-2">
-        {MEDALS[position]}
-      </p>
+      {/* Top accent bar in medal color */}
+      <div
+        className="absolute top-0 left-0 right-0 h-0.5"
+        style={{ backgroundColor: meta.accent }}
+      />
+
+      <div className="flex items-center justify-center gap-1 mb-2">
+        <span className="text-base leading-none">{meta.emoji}</span>
+        <p
+          className="font-sans text-[10px] tracking-widest uppercase"
+          style={{ color: meta.accent }}
+        >
+          {meta.label}
+        </p>
+      </div>
+
       <div className="flex justify-center mb-2">
         <PlayerAvatar
           name={standing.player.name}
@@ -38,11 +53,11 @@ function PodiumCard({ standing, position }: { standing: PlayerStanding; position
           size={isFirst ? 'lg' : 'md'}
         />
       </div>
-      <p className="font-serif text-sm text-cream mb-1">{standing.player.name}</p>
-      <p className={`font-serif text-gold-light ${isFirst ? 'text-3xl' : 'text-2xl'}`}>
+      <p className="font-serif text-sm text-cream mb-1 leading-tight">{standing.player.name}</p>
+      <p className={`font-serif text-gold-light ${isFirst ? 'text-3xl' : 'text-2xl'} leading-none`}>
         {standing.totalPoints}
       </p>
-      <p className="font-sans text-[10px] tracking-widest uppercase text-cream/40 mt-0.5">
+      <p className="font-sans text-[10px] tracking-widest uppercase text-cream/40 mt-1">
         points
       </p>
       {standing.tournamentsPlayed > 0 && (
