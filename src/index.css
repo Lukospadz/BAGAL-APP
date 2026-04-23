@@ -36,6 +36,12 @@
 .avatar-frame-rainbow  { animation: frame-rainbow  2.5s linear      infinite; }
 .avatar-frame-prestige { animation: frame-prestige 2.0s ease-in-out infinite; }
 
+/* ── Green jacket glow ───────────────────────────────────────────────── */
+@keyframes pulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.08); }
+}
+
 /* ── Fraunces optical sizing for display ─────────────────────────────── */
 .font-display {
   font-family: 'Fraunces', Georgia, serif;
