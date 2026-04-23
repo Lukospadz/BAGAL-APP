@@ -10,9 +10,9 @@ import { useSeasons } from '@/hooks/useSeasons'
 import type { PlayerStanding } from '@/lib/scoring'
 
 const MEDAL_META = [
-  { label: '1st', emoji: '🥇', accent: '#c9a84c' }, // gold
-  { label: '2nd', emoji: '🥈', accent: '#a8b3c0' }, // silver
-  { label: '3rd', emoji: '🥉', accent: '#b87333' }, // bronze
+  { label: '1st', emoji: '🥇', accent: '#d4a520', bg: 'linear-gradient(160deg, #2d7a38 0%, #4a9b5c 100%)' }, // gold on fresh green
+  { label: '2nd', emoji: '🥈', accent: '#b8c4d1', bg: 'linear-gradient(160deg, #4a9b5c 0%, #6ab274 100%)' }, // silver on light green
+  { label: '3rd', emoji: '🥉', accent: '#c97b4a', bg: 'linear-gradient(160deg, #6ab274 0%, #8bbf72 100%)' }, // bronze on lightest
 ]
 
 function PodiumCard({ standing, position }: { standing: PlayerStanding; position: number }) {
@@ -21,22 +21,21 @@ function PodiumCard({ standing, position }: { standing: PlayerStanding; position
   return (
     <div
       className={[
-        'rounded-xl p-4 text-center text-cream relative overflow-hidden',
-        isFirst
-          ? 'bg-gradient-to-b from-green-dark to-green-mid ring-1 ring-gold/40'
-          : 'bg-green-dark',
+        'rounded-2xl p-4 text-center text-cream relative overflow-hidden shadow-card',
+        isFirst ? 'ring-2 ring-gold/60' : '',
       ].join(' ')}
+      style={{ background: meta.bg }}
     >
       {/* Top accent bar in medal color */}
       <div
-        className="absolute top-0 left-0 right-0 h-0.5"
+        className="absolute top-0 left-0 right-0 h-1"
         style={{ backgroundColor: meta.accent }}
       />
 
       <div className="flex items-center justify-center gap-1 mb-2">
         <span className="text-base leading-none">{meta.emoji}</span>
         <p
-          className="font-sans text-[10px] tracking-widest uppercase"
+          className="font-sans text-[10px] font-bold tracking-widest uppercase"
           style={{ color: meta.accent }}
         >
           {meta.label}
@@ -53,15 +52,15 @@ function PodiumCard({ standing, position }: { standing: PlayerStanding; position
           size={isFirst ? 'lg' : 'md'}
         />
       </div>
-      <p className="font-sans text-sm text-cream mb-1 leading-tight font-medium">{standing.player.name}</p>
-      <p className={`font-display text-gold-light ${isFirst ? 'text-[32px]' : 'text-[26px]'} leading-none font-bold`}>
+      <p className="font-sans text-sm text-white mb-1 leading-tight font-semibold">{standing.player.name}</p>
+      <p className={`font-display text-white ${isFirst ? 'text-[34px]' : 'text-[26px]'} leading-none font-bold`}>
         {standing.totalPoints}
       </p>
-      <p className="font-sans text-[10px] tracking-widest uppercase text-cream/40 mt-1">
+      <p className="font-sans text-[10px] font-semibold tracking-widest uppercase text-white/60 mt-1">
         points
       </p>
       {standing.tournamentsPlayed > 0 && (
-        <p className="font-sans text-[10px] text-cream/40 mt-1">
+        <p className="font-sans text-[10px] text-white/60 mt-1">
           {standing.tournamentsPlayed} played · {standing.wins} {standing.wins === 1 ? 'win' : 'wins'}
         </p>
       )}
