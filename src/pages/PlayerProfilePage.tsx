@@ -393,7 +393,7 @@ function ProfileHeader({
           />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-serif text-xl text-cream leading-tight">{player.name}</p>
+          <p className="font-display text-2xl text-cream leading-tight font-semibold tracking-tight">{player.name}</p>
           {player.active_title && (
             <p className="font-sans text-xs text-gold italic mt-0.5">
               &ldquo;{player.active_title}&rdquo;

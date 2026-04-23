@@ -53,8 +53,8 @@ function PodiumCard({ standing, position }: { standing: PlayerStanding; position
           size={isFirst ? 'lg' : 'md'}
         />
       </div>
-      <p className="font-serif text-sm text-cream mb-1 leading-tight">{standing.player.name}</p>
-      <p className={`font-serif text-gold-light ${isFirst ? 'text-3xl' : 'text-2xl'} leading-none`}>
+      <p className="font-sans text-sm text-cream mb-1 leading-tight font-medium">{standing.player.name}</p>
+      <p className={`font-display text-gold-light ${isFirst ? 'text-[32px]' : 'text-[26px]'} leading-none font-bold`}>
         {standing.totalPoints}
       </p>
       <p className="font-sans text-[10px] tracking-widest uppercase text-cream/40 mt-1">

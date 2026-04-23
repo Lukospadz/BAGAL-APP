@@ -1,43 +1,47 @@
+import { Link } from 'react-router-dom'
+import { useAuth } from '@/context/AuthContext'
 import { useActiveSeason } from '@/hooks/useSeasons'
 
-function FlagIcon({ flip = false }: { flip?: boolean }) {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      fill="none"
-      className="w-5 h-5 flex-shrink-0"
-      style={flip ? { transform: 'scaleX(-1)' } : undefined}
-    >
-      <line x1="5" y1="2" x2="5" y2="18" stroke="#c9a84c" strokeWidth="1.5" strokeLinecap="round" />
-      <polygon points="5,2 15,6 5,10" fill="#c9a84c" />
-    </svg>
-  )
-}
-
 export function SiteHeader() {
+  const { isPlayer, isAdmin, signOut } = useAuth()
   const { data: season } = useActiveSeason()
-  const seasonLabel = season ? season.name : 'BAGAL'
 
   return (
-    <div className="bg-green-dark text-cream text-center pt-4 px-4 pb-0">
-      <div className="flex items-center justify-center gap-2 mb-0.5">
-        <FlagIcon />
-        <span className="font-sans text-[10px] tracking-[0.16em] uppercase text-cream/50">
-          Below Average Golfers Association League
-        </span>
-        <FlagIcon flip />
+    <header className="relative z-10 px-4 pt-5 pb-3">
+      <div className="flex items-center justify-between">
+        <Link to="/" className="flex items-baseline gap-2 group">
+          <span className="font-display text-[30px] font-bold tracking-tight text-green-dark leading-none group-hover:text-green-mid transition-colors">
+            BAGAL
+          </span>
+          {season && (
+            <span className="chip-coral">
+              {season.name}
+            </span>
+          )}
+        </Link>
+
+        <div className="flex items-center gap-1.5">
+          {isAdmin && (
+            <Link to="/admin" className="btn-ghost text-xs py-1.5 px-3">
+              Admin
+            </Link>
+          )}
+          {isPlayer ? (
+            <>
+              <Link to="/profile" className="btn-ghost text-xs py-1.5 px-3">
+                Profile
+              </Link>
+              <button onClick={() => void signOut()} className="font-sans text-xs text-green-mid/70 hover:text-green-dark px-2">
+                Sign out
+              </button>
+            </>
+          ) : (
+            <Link to="/login" className="btn-primary text-xs py-1.5 px-3">
+              Sign in
+            </Link>
+          )}
+        </div>
       </div>
-
-      <h1 className="font-serif text-[26px] font-normal leading-tight tracking-[0.02em]">
-        BAGAL{' '}
-        <em className="not-italic text-gold-light">{seasonLabel}</em>
-      </h1>
-
-      <p className="font-sans text-[10px] tracking-[0.08em] uppercase text-cream/40 mt-0.5 mb-3">
-        Luke &bull; Alex &bull; Peter &bull; Est.&nbsp;Year&nbsp;1
-      </p>
-
-      <div className="h-px bg-white/10 -mx-4" />
-    </div>
+    </header>
   )
 }
