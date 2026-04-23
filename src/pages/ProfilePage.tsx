@@ -43,13 +43,16 @@ function GreenBookOwn({ playerId }: { playerId: string }) {
     setNotes('')
   }
 
-  const willEarnBucks = score ? parseInt(score) < 90 : false
+  const scoreNum = score ? parseInt(score) : null
+  const parNum   = par ? parseInt(par) : null
+  const willEarnBucks =
+    scoreNum != null && parNum != null && scoreNum < parNum + 20
 
   return (
     <div className="space-y-4">
       <Card className="p-4 space-y-3">
         <p className="font-sans text-xs text-green-mid">
-          Log a round outside of BAGAL. Break 90 and earn{' '}
+          Log a round outside of BAGAL. Shoot under 20-over-par and earn{' '}
           <span className="text-gold font-medium">+150 BAGAL Bucks</span>.
         </p>
         <div className="grid grid-cols-2 gap-3">
@@ -81,7 +84,9 @@ function GreenBookOwn({ playerId }: { playerId: string }) {
           <input className="field-input" placeholder="Any notes…" value={notes} onChange={(e) => setNotes(e.target.value)} />
         </div>
         {willEarnBucks && (
-          <p className="font-sans text-xs text-gold font-medium">Sub-90 round — you'll earn +150 BAGAL Bucks on save!</p>
+          <p className="font-sans text-xs text-gold font-medium">
+            Under 20 over — you'll earn +150 BAGAL Bucks on save!
+          </p>
         )}
         {createRound.isError && (
           <p className="font-sans text-xs text-red-600">{String(createRound.error)}</p>
@@ -108,7 +113,9 @@ function GreenBookOwn({ playerId }: { playerId: string }) {
                     {r.score != null && (
                       <> · <span className="font-medium">{r.score}</span>{overUnder != null && <span> ({overUnder > 0 ? `+${overUnder}` : overUnder})</span>}</>
                     )}
-                    {r.score != null && r.score < 90 && <span className="ml-1 text-gold font-medium">sub-90 ★</span>}
+                    {r.score != null && r.par != null && r.score < r.par + 20 && (
+                      <span className="ml-1 text-gold font-medium">bonus ★</span>
+                    )}
                   </p>
                   {r.course_rating != null && r.course_rating > 0 && <div className="mt-0.5"><StarRating value={r.course_rating} /></div>}
                   {r.notes && <p className="font-sans text-xs text-green-mid/60 italic mt-0.5">{r.notes}</p>}

@@ -3,15 +3,13 @@ export type SeasonStatus = 'active' | 'completed'
 export type TournamentStatus = 'upcoming' | 'completed'
 export type TournamentFormat = 'stroke' | 'match' | 'scramble'
 
-export interface BagContents {
-  driver?: string
-  woods?: string
-  irons?: string
-  wedges?: string
-  putter?: string
-  ball?: string
-  notes?: string
+export interface BagItem {
+  type: string        // e.g. 'Driver', 'Wedge', 'Putter'
+  description: string // free-form, e.g. 'TaylorMade Stealth 2 9°'
 }
+
+// Back-compat — old bag shape (pre-migration); new bag is BagItem[]
+export type Bag = BagItem[]
 
 export interface Player {
   id: string
@@ -22,7 +20,7 @@ export interface Player {
   avatar_url: string | null
   bio: string | null
   home_course: string | null
-  bag: BagContents
+  bag: Bag
   bagal_bucks: number
   active_title: string | null
   active_frame: string | null

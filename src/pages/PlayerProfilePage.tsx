@@ -12,40 +12,60 @@ import {
 import { PlayerAvatar } from '@/components/ui/PlayerAvatar'
 import { StarRating } from '@/components/ui/StarRating'
 import { Card } from '@/components/ui/Card'
-import type { BagContents, FavouriteCourse } from '@/types/db'
+import type { Bag, BagItem, FavouriteCourse } from '@/types/db'
 
 // ─── Bag ──────────────────────────────────────────────────────────────────────
-const BAG_SLOTS: { key: keyof BagContents; label: string; placeholder: string }[] = [
-  { key: 'driver',  label: 'Driver',  placeholder: 'e.g. TaylorMade Stealth 2' },
-  { key: 'woods',   label: '3W / 5W', placeholder: 'e.g. Titleist TSR2 3-Wood' },
-  { key: 'irons',   label: 'Irons',   placeholder: 'e.g. Ping G425 4–PW' },
-  { key: 'wedges',  label: 'Wedges',  placeholder: 'e.g. Vokey SM9 52°/56°/60°' },
-  { key: 'putter',  label: 'Putter',  placeholder: 'e.g. Scotty Cameron Newport 2' },
-  { key: 'ball',    label: 'Ball',    placeholder: 'e.g. Titleist Pro V1' },
-  { key: 'notes',   label: 'Notes',   placeholder: 'Anything else in the bag…' },
+const CLUB_TYPES = [
+  'Driver',
+  'Fairway Wood',
+  'Hybrid',
+  'Iron',
+  'Wedge',
+  'Putter',
+  'Ball',
+  'Other',
 ]
 
+// Old shape was an object; coerce to array for safety.
+function toBagArray(bag: unknown): BagItem[] {
+  if (Array.isArray(bag)) return bag as BagItem[]
+  return []
+}
+
 function BagSection({ bag, editable, onSave }: {
-  bag: BagContents
+  bag: Bag | unknown
   editable: boolean
-  onSave?: (bag: BagContents) => Promise<void>
+  onSave?: (bag: Bag) => Promise<void>
 }) {
-  const [draft, setDraft] = useState<BagContents>({ ...bag })
+  const [draft, setDraft] = useState<BagItem[]>(toBagArray(bag))
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+
+  const items = editable ? draft : toBagArray(bag)
+
+  function updateItem(i: number, patch: Partial<BagItem>) {
+    setDraft((d) => d.map((item, idx) => (idx === i ? { ...item, ...patch } : item)))
+  }
+  function addItem() {
+    setDraft((d) => [...d, { type: 'Driver', description: '' }])
+  }
+  function removeItem(i: number) {
+    setDraft((d) => d.filter((_, idx) => idx !== i))
+  }
 
   async function handleSave() {
     if (!onSave) return
     setSaving(true)
-    await onSave(draft)
+    // Strip empty entries
+    const clean = draft.filter((x) => x.description.trim())
+    await onSave(clean)
+    setDraft(clean)
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
 
-  const hasAnyClub = BAG_SLOTS.some((s) => !!(editable ? draft[s.key] : bag[s.key]))
-
-  if (!editable && !hasAnyClub) {
+  if (!editable && items.length === 0) {
     return (
       <p className="font-serif italic text-green-mid text-sm text-center py-8">
         No bag details yet.
@@ -53,40 +73,67 @@ function BagSection({ bag, editable, onSave }: {
     )
   }
 
-  return (
-    <div className="space-y-3">
-      {BAG_SLOTS.map(({ key, label, placeholder }) => {
-        const val = editable ? draft[key] : bag[key]
-        if (!editable && !val) return null
-        return (
-          <div key={key} className="flex items-start gap-3">
-            <span className="font-sans text-[10px] tracking-widest uppercase text-green-mid/60 w-14 flex-shrink-0 pt-2">
-              {label}
+  if (!editable) {
+    return (
+      <Card className="divide-y divide-green-pale">
+        {items.map((item, i) => (
+          <div key={i} className="flex items-center gap-3 px-4 py-2.5">
+            <span className="font-sans text-[10px] tracking-widest uppercase text-green-mid/70 w-24 flex-shrink-0">
+              {item.type}
             </span>
-            {editable ? (
-              <input
-                className="field-input flex-1"
-                placeholder={placeholder}
-                value={draft[key] ?? ''}
-                onChange={(e) =>
-                  setDraft((d) => ({ ...d, [key]: e.target.value || undefined }))
-                }
-              />
-            ) : (
-              <p className="font-serif text-sm text-green-dark pt-1.5">{val}</p>
-            )}
+            <span className="font-serif text-sm text-green-dark flex-1">
+              {item.description}
+            </span>
           </div>
-        )
-      })}
-      {editable && (
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="btn-primary w-full mt-2"
-        >
-          {saving ? 'Saving…' : saved ? 'Saved!' : 'Save bag'}
-        </button>
+        ))}
+      </Card>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      {draft.length === 0 && (
+        <p className="font-serif italic text-green-mid/60 text-sm text-center py-4">
+          No clubs added yet.
+        </p>
       )}
+      {draft.map((item, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <select
+            className="field-select text-xs py-1.5 px-2 w-28 flex-shrink-0"
+            value={item.type}
+            onChange={(e) => updateItem(i, { type: e.target.value })}
+          >
+            {CLUB_TYPES.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+          <input
+            className="field-input flex-1 text-sm"
+            placeholder="Brand / model"
+            value={item.description}
+            onChange={(e) => updateItem(i, { description: e.target.value })}
+          />
+          <button
+            onClick={() => removeItem(i)}
+            className="text-red-600/70 hover:text-red-700 font-sans text-sm px-2 flex-shrink-0"
+            aria-label="Remove"
+          >
+            ×
+          </button>
+        </div>
+      ))}
+
+      <button onClick={addItem} className="btn-ghost w-full text-xs">
+        + Add club
+      </button>
+      <button
+        onClick={handleSave}
+        disabled={saving}
+        className="btn-primary w-full"
+      >
+        {saving ? 'Saving…' : saved ? 'Saved!' : 'Save bag'}
+      </button>
     </div>
   )
 }
@@ -132,8 +179,6 @@ function CourseSlot({
     await upsert.mutateAsync({ playerId, rank, name: course.name, notes: course.notes, photoUrl: url })
   }
 
-  const ordinals = ['1st', '2nd', '3rd', '4th']
-
   // Read-only tile (empty or filled)
   if (!editable) {
     return (
@@ -143,14 +188,8 @@ function CourseSlot({
             <img src={course.photo_url} alt={course.name} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <span className="font-serif text-xl text-green-mid/30">{ordinals[rank - 1]}</span>
+              <span className="font-serif text-3xl text-green-mid/20">⛳</span>
             </div>
-          )}
-          {/* Rank badge */}
-          {course && (
-            <span className="absolute top-1 left-1 bg-black/60 text-cream font-sans text-[9px] px-1.5 py-0.5 rounded">
-              {ordinals[rank - 1]}
-            </span>
           )}
         </div>
         {course ? (
@@ -175,15 +214,8 @@ function CourseSlot({
           <img src={course.photo_url} alt={course.name} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <span className="font-serif text-xl text-green-mid/30">{ordinals[rank - 1]}</span>
+            <span className="font-serif text-3xl text-green-mid/20">⛳</span>
           </div>
-        )}
-
-        {/* Rank badge */}
-        {course && (
-          <span className="absolute top-1 left-1 bg-black/60 text-cream font-sans text-[9px] px-1.5 py-0.5 rounded">
-            {ordinals[rank - 1]}
-          </span>
         )}
 
         {/* Photo upload overlay (only if course exists) */}
@@ -264,14 +296,14 @@ function TopFourSection({ playerId, editable }: { playerId: string; editable: bo
   return (
     <div>
       <p className="font-sans text-[10px] tracking-widest uppercase text-green-mid/60 mb-2 text-center">
-        Favourite Courses
+        Four Favourite Courses
       </p>
       <div className="grid grid-cols-4 gap-2">
-        {[1, 2, 3, 4].map((rank) => (
+        {[1, 2, 3, 4].map((slot) => (
           <CourseSlot
-            key={rank}
-            rank={rank}
-            course={courses?.find((c) => c.rank === rank)}
+            key={slot}
+            rank={slot}
+            course={courses?.find((c) => c.rank === slot)}
             playerId={playerId}
             editable={editable}
           />
@@ -314,8 +346,8 @@ function GreenBookSection({ playerId }: { playerId: string }) {
                     )}
                   </>
                 )}
-                {r.score != null && r.score < 90 && (
-                  <span className="ml-1 text-gold font-medium">sub-90 ★</span>
+                {r.score != null && r.par != null && r.score < r.par + 20 && (
+                  <span className="ml-1 text-gold font-medium">bonus ★</span>
                 )}
               </p>
               {r.course_rating != null && r.course_rating > 0 && (
