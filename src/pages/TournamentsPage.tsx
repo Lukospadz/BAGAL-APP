@@ -56,7 +56,47 @@ function GreenJacket({ champion }: { champion: Player | null }) {
           </defs>
 
           {/* Drop shadow beneath */}
-          <ellipse cx="110" cy="268" rx="75" ry="6" fill="rgba(0,0,0,0.3)" />
+          <ellipse cx="110" cy="268" rx="90" ry="6" fill="rgba(0,0,0,0.3)" />
+
+          {/* Left sleeve (drawn before body so body overlaps cleanly) */}
+          <path
+            d="M 35 50
+               L 8 60
+               L 5 238
+               L 14 250
+               L 52 242
+               L 45 90 Z"
+            fill="url(#jacket-body)"
+          />
+          {/* Left sleeve outer edge highlight */}
+          <path d="M 8 60 L 5 238" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" fill="none" />
+          {/* Left cuff band */}
+          <path
+            d="M 10 232 L 50 226 L 52 242 L 14 250 Z"
+            fill="rgba(0,0,0,0.22)"
+          />
+          {/* Left cuff button */}
+          <circle cx="24" cy="238" r="1.8" fill="#f5d970" stroke="#d4a520" strokeWidth="0.5" />
+
+          {/* Right sleeve */}
+          <path
+            d="M 185 50
+               L 212 60
+               L 215 238
+               L 206 250
+               L 168 242
+               L 175 90 Z"
+            fill="url(#jacket-body)"
+          />
+          {/* Right sleeve shadow edge (opposite side, darker) */}
+          <path d="M 212 60 L 215 238" stroke="rgba(0,0,0,0.25)" strokeWidth="1.5" fill="none" />
+          {/* Right cuff band */}
+          <path
+            d="M 170 226 L 210 232 L 206 250 L 168 242 Z"
+            fill="rgba(0,0,0,0.22)"
+          />
+          {/* Right cuff button */}
+          <circle cx="196" cy="238" r="1.8" fill="#f5d970" stroke="#d4a520" strokeWidth="0.5" />
 
           {/* Main body silhouette */}
           <path
