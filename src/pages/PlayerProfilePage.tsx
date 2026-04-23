@@ -134,90 +134,127 @@ function CourseSlot({
 
   const ordinals = ['1st', '2nd', '3rd', '4th']
 
-  return (
-    <div className="rounded-xl border border-green-pale overflow-hidden bg-white flex flex-col shadow-card">
-      {/* Photo area */}
-      <div className="relative h-32 bg-green-faint">
-        {course?.photo_url ? (
-          <img
-            src={course.photo_url}
-            alt={course.name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-1">
-            <span className="font-sans text-[10px] tracking-widest uppercase text-green-mid/40">
+  // Read-only tile (empty or filled)
+  if (!editable) {
+    return (
+      <div className="flex flex-col gap-1.5">
+        <div className="relative aspect-[2/3] rounded-md overflow-hidden bg-green-faint shadow-card border border-green-pale">
+          {course?.photo_url ? (
+            <img src={course.photo_url} alt={course.name} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <span className="font-serif text-xl text-green-mid/30">{ordinals[rank - 1]}</span>
+            </div>
+          )}
+          {/* Rank badge */}
+          {course && (
+            <span className="absolute top-1 left-1 bg-black/60 text-cream font-sans text-[9px] px-1.5 py-0.5 rounded">
               {ordinals[rank - 1]}
             </span>
-            {editable && (
-              <span className="font-sans text-[10px] text-green-mid/40">No photo</span>
+          )}
+        </div>
+        {course ? (
+          <div className="px-0.5">
+            <p className="font-serif text-xs text-green-dark leading-tight line-clamp-2">{course.name}</p>
+            {course.notes && (
+              <p className="font-sans text-[10px] text-green-mid/70 italic line-clamp-1">{course.notes}</p>
             )}
           </div>
+        ) : (
+          <p className="font-sans text-[10px] text-green-mid/40 italic text-center">Empty</p>
         )}
-        {editable && course && (
+      </div>
+    )
+  }
+
+  // Editable tile
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="relative aspect-[2/3] rounded-md overflow-hidden bg-green-faint shadow-card border border-green-pale group">
+        {course?.photo_url ? (
+          <img src={course.photo_url} alt={course.name} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <span className="font-serif text-xl text-green-mid/30">{ordinals[rank - 1]}</span>
+          </div>
+        )}
+
+        {/* Rank badge */}
+        {course && (
+          <span className="absolute top-1 left-1 bg-black/60 text-cream font-sans text-[9px] px-1.5 py-0.5 rounded">
+            {ordinals[rank - 1]}
+          </span>
+        )}
+
+        {/* Photo upload overlay (only if course exists) */}
+        {course && (
           <button
             onClick={() => fileRef.current?.click()}
             disabled={uploadPhoto.isPending}
-            className="absolute bottom-2 right-2 bg-black/50 text-white font-sans text-[10px] px-2 py-1 rounded-md hover:bg-black/70 transition-colors"
+            className="absolute inset-0 bg-black/0 hover:bg-black/40 flex items-center justify-center transition-colors"
           >
-            {uploadPhoto.isPending ? 'Uploading…' : 'Photo'}
+            <span className="font-sans text-[10px] text-cream opacity-0 group-hover:opacity-100 bg-black/60 px-2 py-1 rounded">
+              {uploadPhoto.isPending ? 'Uploading…' : course.photo_url ? 'Change' : 'Add photo'}
+            </span>
           </button>
         )}
+
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
       </div>
 
-      {/* Info area */}
-      <div className="p-3 flex-1 flex flex-col gap-1">
-        {course && !editing ? (
-          <>
-            <p className="font-serif text-sm text-green-dark leading-tight">{course.name}</p>
-            {course.notes && (
-              <p className="font-sans text-xs text-green-mid/70 italic">{course.notes}</p>
-            )}
-            {editable && (
-              <div className="flex gap-2 mt-auto pt-2">
-                <button onClick={() => { setName(course.name); setNotes(course.notes ?? ''); setEditing(true) }} className="btn-ghost text-xs py-1 px-2 flex-1">
-                  Edit
-                </button>
-                <button onClick={handleRemove} disabled={remove.isPending} className="btn-danger text-xs py-1 px-2">
-                  Remove
-                </button>
-              </div>
-            )}
-          </>
-        ) : editable ? (
-          <>
-            <input
-              className="field-input text-xs"
-              placeholder="Course name…"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-            <input
-              className="field-input text-xs"
-              placeholder="Notes (optional)"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-            <div className="flex gap-2 mt-1">
-              <button
-                onClick={handleSave}
-                disabled={!name.trim() || upsert.isPending}
-                className="btn-primary text-xs py-1 px-3 flex-1"
-              >
-                {upsert.isPending ? 'Saving…' : 'Save'}
+      {course && !editing ? (
+        <div className="px-0.5">
+          <p className="font-serif text-xs text-green-dark leading-tight line-clamp-2">{course.name}</p>
+          {course.notes && (
+            <p className="font-sans text-[10px] text-green-mid/70 italic line-clamp-1">{course.notes}</p>
+          )}
+          <div className="flex gap-1 mt-1">
+            <button
+              onClick={() => { setName(course.name); setNotes(course.notes ?? ''); setEditing(true) }}
+              className="font-sans text-[10px] text-green-mid hover:text-green-dark underline"
+            >
+              Edit
+            </button>
+            <span className="text-green-pale">·</span>
+            <button
+              onClick={handleRemove}
+              disabled={remove.isPending}
+              className="font-sans text-[10px] text-red-600/80 hover:text-red-700 underline"
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-1">
+          <input
+            className="field-input text-[11px] py-1 px-2"
+            placeholder="Course"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <input
+            className="field-input text-[11px] py-1 px-2"
+            placeholder="Notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+          />
+          <div className="flex gap-1">
+            <button
+              onClick={handleSave}
+              disabled={!name.trim() || upsert.isPending}
+              className="btn-primary text-[10px] py-1 px-2 flex-1"
+            >
+              {upsert.isPending ? '…' : 'Save'}
+            </button>
+            {editing && (
+              <button onClick={() => setEditing(false)} className="btn-ghost text-[10px] py-1 px-2">
+                ✕
               </button>
-              {editing && (
-                <button onClick={() => setEditing(false)} className="btn-ghost text-xs py-1 px-3">
-                  Cancel
-                </button>
-              )}
-            </div>
-          </>
-        ) : (
-          <p className="font-sans text-xs text-green-mid/40 italic text-center py-2">Empty</p>
-        )}
-      </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -225,16 +262,21 @@ function CourseSlot({
 function TopFourSection({ playerId, editable }: { playerId: string; editable: boolean }) {
   const { data: courses } = useFavouriteCourses(playerId)
   return (
-    <div className="grid grid-cols-2 gap-3">
-      {[1, 2, 3, 4].map((rank) => (
-        <CourseSlot
-          key={rank}
-          rank={rank}
-          course={courses?.find((c) => c.rank === rank)}
-          playerId={playerId}
-          editable={editable}
-        />
-      ))}
+    <div>
+      <p className="font-sans text-[10px] tracking-widest uppercase text-green-mid/60 mb-2 text-center">
+        Favourite Courses
+      </p>
+      <div className="grid grid-cols-4 gap-2">
+        {[1, 2, 3, 4].map((rank) => (
+          <CourseSlot
+            key={rank}
+            rank={rank}
+            course={courses?.find((c) => c.rank === rank)}
+            playerId={playerId}
+            editable={editable}
+          />
+        ))}
+      </div>
     </div>
   )
 }
