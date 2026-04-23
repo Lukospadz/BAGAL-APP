@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { usePlayers, useCreatePlayer, useUpdatePlayer, useDeletePlayer } from '@/hooks/usePlayers'
+import { useAdminResetPlayerBucks } from '@/hooks/useBucks'
 import { PlayerAvatar } from '@/components/ui/PlayerAvatar'
 import { Card } from '@/components/ui/Card'
 import type { Player } from '@/types/db'
@@ -184,11 +185,22 @@ function PlayerFormFields({
 export function PlayersAdminPage() {
   const { data: players, isLoading } = usePlayers()
   const deletePlayer = useDeletePlayer()
+  const resetBucks = useAdminResetPlayerBucks()
   const [mode, setMode] = useState<'list' | 'create' | { edit: Player }>('list')
 
   async function handleDelete(player: Player) {
     if (!confirm(`Delete ${player.name}? This cannot be undone.`)) return
     await deletePlayer.mutateAsync(player.id)
+  }
+
+  async function handleResetBucks(player: Player) {
+    if (
+      !confirm(
+        `Reset ${player.name}'s BAGAL Bucks?\n\nThis wipes their balance to 0, removes every shop item they own, clears their equipped title/frame, and deletes their transaction history. Cannot be undone.`,
+      )
+    )
+      return
+    await resetBucks.mutateAsync(player.id)
   }
 
   if (mode === 'create') {
@@ -235,23 +247,35 @@ export function PlayersAdminPage() {
       ) : (
         <div className="space-y-2">
           {players.map((p) => (
-            <Card key={p.id} className="p-4 flex items-center gap-3">
+            <Card key={p.id} className="p-4 flex items-center gap-3 flex-wrap">
               <PlayerAvatar
                 name={p.name}
                 initials={p.initials}
                 color={p.color}
                 avatarUrl={p.avatar_url}
+                frame={p.active_frame}
               />
               <div className="flex-1 min-w-0">
                 <p className="font-serif text-base text-green-dark">{p.name}</p>
                 <p className="font-sans text-xs text-green-mid">
                   {p.initials}
                   {p.handicap != null ? ` · HCP ${p.handicap}` : ''}
+                  {' · '}
+                  <span className="text-gold font-semibold">
+                    {p.bagal_bucks.toLocaleString()} BB
+                  </span>
                 </p>
               </div>
-              <div className="flex gap-2 flex-shrink-0">
+              <div className="flex gap-2 flex-shrink-0 flex-wrap">
                 <button onClick={() => setMode({ edit: p })} className="btn-ghost text-xs py-1 px-3">
                   Edit
+                </button>
+                <button
+                  onClick={() => handleResetBucks(p)}
+                  disabled={resetBucks.isPending}
+                  className="btn-ghost text-xs py-1 px-3 border-amber-300 text-amber-700 hover:bg-amber-50"
+                >
+                  Reset BB
                 </button>
                 <button
                   onClick={() => handleDelete(p)}
@@ -268,6 +292,9 @@ export function PlayersAdminPage() {
 
       {deletePlayer.isError && (
         <p className="mt-3 font-sans text-xs text-red-600">{String(deletePlayer.error)}</p>
+      )}
+      {resetBucks.isError && (
+        <p className="mt-3 font-sans text-xs text-red-600">{String(resetBucks.error)}</p>
       )}
     </div>
   )

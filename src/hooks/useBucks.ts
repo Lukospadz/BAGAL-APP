@@ -86,6 +86,23 @@ export function useUnequipItem() {
   })
 }
 
+export function useAdminResetPlayerBucks() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (playerId: string) => {
+      const { error } = await supabase.rpc('admin_reset_player_bucks', {
+        p_player_id: playerId,
+      })
+      if (error) throw new Error(error.message)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['players'] })
+      qc.invalidateQueries({ queryKey: ['player_items'] })
+      qc.invalidateQueries({ queryKey: ['bucks_transactions'] })
+    },
+  })
+}
+
 export function useAwardTournamentBucks() {
   const qc = useQueryClient()
   return useMutation({
