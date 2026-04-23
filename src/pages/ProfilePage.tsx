@@ -3,17 +3,17 @@ import { useAuth } from '@/context/AuthContext'
 import { usePlayer, useUpdatePlayer } from '@/hooks/usePlayers'
 import { usePersonalRounds, useCreatePersonalRound, useDeletePersonalRound } from '@/hooks/usePersonalRounds'
 import { usePlayerItems, useBuyShopItem, useEquipItem, useUnequipItem } from '@/hooks/useBucks'
-import { PlayerAvatar } from '@/components/ui/PlayerAvatar'
 import { StarRating } from '@/components/ui/StarRating'
 import { Card } from '@/components/ui/Card'
 import { FRAME_ITEMS, TITLE_ITEMS, TIER_META, TIER_ORDER } from '@/lib/shop'
 import type { ShopItem, ItemTier } from '@/lib/shop'
+import { ProfileHeader, ProfileTabs } from './PlayerProfilePage'
 
 // ─── Tab types ────────────────────────────────────────────────────────────────
-type Tab = 'greenbook' | 'shop' | 'info'
+type Tab = 'profile' | 'greenbook' | 'shop' | 'info'
 
-// ─── Green Book ───────────────────────────────────────────────────────────────
-function GreenBook({ playerId }: { playerId: string }) {
+// ─── Green Book (own — with log form) ─────────────────────────────────────────
+function GreenBookOwn({ playerId }: { playerId: string }) {
   const { data: rounds, isLoading } = usePersonalRounds(playerId)
   const createRound = useCreatePersonalRound()
   const deleteRound = useDeletePersonalRound()
@@ -43,17 +43,15 @@ function GreenBook({ playerId }: { playerId: string }) {
     setNotes('')
   }
 
-  const scoreNum = score ? parseInt(score) : null
-  const willEarnBucks = scoreNum !== null && scoreNum < 90
+  const willEarnBucks = score ? parseInt(score) < 90 : false
 
   return (
     <div className="space-y-4">
       <Card className="p-4 space-y-3">
         <p className="font-sans text-xs text-green-mid">
-          Log a round you played outside of BAGAL. Break 90 and earn{' '}
+          Log a round outside of BAGAL. Break 90 and earn{' '}
           <span className="text-gold font-medium">+150 BAGAL Bucks</span>.
         </p>
-
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="field-label">Date</label>
@@ -64,65 +62,37 @@ function GreenBook({ playerId }: { playerId: string }) {
             <input className="field-input" placeholder="Course name" value={course} onChange={(e) => setCourse(e.target.value)} />
           </div>
         </div>
-
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="field-label">Score</label>
-            <input
-              type="number"
-              inputMode="numeric"
-              className="field-input"
-              placeholder="89"
-              value={score}
-              onChange={(e) => setScore(e.target.value)}
-            />
+            <input type="number" inputMode="numeric" className="field-input" placeholder="89" value={score} onChange={(e) => setScore(e.target.value)} />
           </div>
           <div>
             <label className="field-label">Par</label>
-            <input
-              type="number"
-              inputMode="numeric"
-              className="field-input"
-              placeholder="72"
-              value={par}
-              onChange={(e) => setPar(e.target.value)}
-            />
+            <input type="number" inputMode="numeric" className="field-input" placeholder="72" value={par} onChange={(e) => setPar(e.target.value)} />
           </div>
         </div>
-
         <div>
           <label className="field-label">Course rating</label>
           <StarRating value={rating} onChange={setRating} />
         </div>
-
         <div>
           <label className="field-label">Notes (optional)</label>
           <input className="field-input" placeholder="Any notes…" value={notes} onChange={(e) => setNotes(e.target.value)} />
         </div>
-
         {willEarnBucks && (
-          <p className="font-sans text-xs text-gold font-medium">
-            ⭐ Sub-90 round — you'll earn +150 BAGAL Bucks on save!
-          </p>
+          <p className="font-sans text-xs text-gold font-medium">Sub-90 round — you'll earn +150 BAGAL Bucks on save!</p>
         )}
-
         {createRound.isError && (
           <p className="font-sans text-xs text-red-600">{String(createRound.error)}</p>
         )}
-
-        <button
-          onClick={handleAdd}
-          disabled={!course.trim() || createRound.isPending}
-          className="btn-primary w-full"
-        >
+        <button onClick={handleAdd} disabled={!course.trim() || createRound.isPending} className="btn-primary w-full">
           {createRound.isPending ? 'Saving…' : 'Log round'}
         </button>
       </Card>
 
       {isLoading ? (
-        <div className="space-y-2">
-          {[1, 2].map((i) => <div key={i} className="h-14 bg-green-pale/50 rounded-lg animate-pulse" />)}
-        </div>
+        <div className="h-20 bg-green-pale/50 rounded-xl animate-pulse" />
       ) : !rounds?.length ? (
         <p className="font-serif italic text-green-mid text-sm text-center py-4">No rounds logged yet.</p>
       ) : (
@@ -136,31 +106,14 @@ function GreenBook({ playerId }: { playerId: string }) {
                   <p className="font-sans text-xs text-green-mid">
                     {r.date}
                     {r.score != null && (
-                      <>
-                        {' · '}
-                        <span className="font-medium">{r.score}</span>
-                        {overUnder != null && (
-                          <span className={overUnder <= 0 ? 'text-green-mid' : 'text-green-mid'}>
-                            {' '}({overUnder > 0 ? `+${overUnder}` : overUnder})
-                          </span>
-                        )}
-                      </>
+                      <> · <span className="font-medium">{r.score}</span>{overUnder != null && <span> ({overUnder > 0 ? `+${overUnder}` : overUnder})</span>}</>
                     )}
-                    {r.score != null && r.score < 90 && (
-                      <span className="ml-1 text-gold font-medium">sub-90 ★</span>
-                    )}
+                    {r.score != null && r.score < 90 && <span className="ml-1 text-gold font-medium">sub-90 ★</span>}
                   </p>
-                  {r.course_rating != null && r.course_rating > 0 && (
-                    <div className="mt-0.5">
-                      <StarRating value={r.course_rating} />
-                    </div>
-                  )}
-                  {r.notes && <p className="font-sans text-xs text-green-mid/60 mt-0.5">{r.notes}</p>}
+                  {r.course_rating != null && r.course_rating > 0 && <div className="mt-0.5"><StarRating value={r.course_rating} /></div>}
+                  {r.notes && <p className="font-sans text-xs text-green-mid/60 italic mt-0.5">{r.notes}</p>}
                 </div>
-                <button
-                  onClick={() => deleteRound.mutateAsync({ id: r.id, playerId })}
-                  className="btn-danger text-xs py-1 px-2 flex-shrink-0"
-                >
+                <button onClick={() => deleteRound.mutateAsync({ id: r.id, playerId })} className="btn-danger text-xs py-1 px-2 flex-shrink-0">
                   Delete
                 </button>
               </div>
@@ -202,13 +155,11 @@ function ShopSection({ playerId, bucks }: { playerId: string; bucks: number }) {
     }
   }
 
-  // Group items by tier for prettier display
   const grouped: Record<ItemTier, ShopItem[]> = { legendary: [], epic: [], rare: [], common: [] }
   for (const item of items) grouped[item.tier].push(item)
 
   return (
     <div className="space-y-4">
-      {/* Balance banner */}
       <Card className="p-4 bg-gradient-to-br from-green-dark to-green-mid text-cream border-0">
         <div className="flex items-center justify-between">
           <div>
@@ -222,10 +173,7 @@ function ShopSection({ playerId, bucks }: { playerId: string; bucks: number }) {
               <button
                 key={t}
                 onClick={() => setShopTab(t)}
-                className={[
-                  'font-sans text-xs px-3 py-1.5 rounded-md transition-all',
-                  shopTab === t ? 'bg-cream text-green-dark font-medium' : 'text-cream/70 hover:text-cream',
-                ].join(' ')}
+                className={['font-sans text-xs px-3 py-1.5 rounded-md transition-all', shopTab === t ? 'bg-cream text-green-dark font-medium' : 'text-cream/70 hover:text-cream'].join(' ')}
               >
                 {t === 'titles' ? 'Titles' : 'Frames'}
               </button>
@@ -234,99 +182,49 @@ function ShopSection({ playerId, bucks }: { playerId: string; bucks: number }) {
         </div>
       </Card>
 
-      {buyItem.isError && (
-        <p className="font-sans text-xs text-red-600">{String(buyItem.error)}</p>
-      )}
+      {buyItem.isError && <p className="font-sans text-xs text-red-600">{String(buyItem.error)}</p>}
 
       {TIER_ORDER.map((tier) => {
         const tierItems = grouped[tier]
         if (!tierItems.length) return null
         const meta = TIER_META[tier]
-
         return (
           <div key={tier}>
             <div className="flex items-center gap-2 mb-2">
               <div className="flex-1 h-px bg-green-pale" />
-              <span
-                className={`font-sans text-[11px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full border ${meta.badge}`}
-              >
+              <span className={`font-sans text-[11px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full border ${meta.badge}`}>
                 {meta.label}
               </span>
               <div className="flex-1 h-px bg-green-pale" />
             </div>
-
             <div className="grid gap-2">
               {tierItems.map((item) => {
                 const isOwned = owned.has(item.id)
                 const equipped = isEquipped(item)
                 const canAfford = bucks >= item.price
                 return (
-                  <Card
-                    key={item.id}
-                    className={[
-                      'p-3 flex items-center gap-3 transition-all relative overflow-hidden',
-                      equipped ? `ring-2 ${meta.ring}` : '',
-                      isOwned && !equipped ? 'bg-green-faint/50' : '',
-                    ].join(' ')}
-                  >
-                    {/* Left accent bar coloured by tier */}
-                    <div
-                      className={[
-                        'absolute left-0 top-0 bottom-0 w-1',
-                        tier === 'legendary' ? 'bg-amber-400' : '',
-                        tier === 'epic'      ? 'bg-purple-400' : '',
-                        tier === 'rare'      ? 'bg-sky-400'    : '',
-                        tier === 'common'    ? 'bg-slate-300'  : '',
-                      ].join(' ')}
-                    />
-
-                    {/* Icon: frame preview or title emblem */}
+                  <Card key={item.id} className={['p-3 flex items-center gap-3 transition-all relative overflow-hidden', equipped ? `ring-2 ${meta.ring}` : '', isOwned && !equipped ? 'bg-green-faint/50' : ''].join(' ')}>
+                    <div className={['absolute left-0 top-0 bottom-0 w-1', tier === 'legendary' ? 'bg-amber-400' : '', tier === 'epic' ? 'bg-purple-400' : '', tier === 'rare' ? 'bg-sky-400' : '', tier === 'common' ? 'bg-slate-300' : ''].join(' ')} />
                     {item.type === 'frame' && item.frameKey ? (
-                      <div
-                        className={`w-10 h-10 rounded-full bg-green-dark flex-shrink-0 ml-2 avatar-frame-${item.frameKey}`}
-                      />
+                      <div className={`w-10 h-10 rounded-full bg-green-dark flex-shrink-0 ml-2 avatar-frame-${item.frameKey}`} />
                     ) : (
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ml-2 ${meta.badge} border-2`}>
-                        <span className="font-serif text-base">
-                          {tier === 'legendary' ? '★' : tier === 'epic' ? '◆' : tier === 'rare' ? '●' : '○'}
-                        </span>
+                        <span className="font-serif text-base">{tier === 'legendary' ? '★' : tier === 'epic' ? '◆' : tier === 'rare' ? '●' : '○'}</span>
                       </div>
                     )}
-
                     <div className="flex-1 min-w-0">
-                      <p className={`font-serif text-sm ${tier === 'legendary' ? 'text-amber-700 font-medium' : 'text-green-dark'}`}>
-                        {item.name}
-                      </p>
-                      {item.description && (
-                        <p className="font-sans text-xs text-green-mid/80">{item.description}</p>
-                      )}
-                      {equipped && (
-                        <p className={`font-sans text-[10px] font-bold tracking-widest uppercase ${meta.color}`}>
-                          Equipped
-                        </p>
-                      )}
+                      <p className={`font-serif text-sm ${tier === 'legendary' ? 'text-amber-700 font-medium' : 'text-green-dark'}`}>{item.name}</p>
+                      {item.description && <p className="font-sans text-xs text-green-mid/80">{item.description}</p>}
+                      {equipped && <p className={`font-sans text-[10px] font-bold tracking-widest uppercase ${meta.color}`}>Equipped</p>}
                     </div>
-
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      {!isOwned && (
-                        <span className={`font-sans text-xs font-medium ${canAfford ? 'text-gold' : 'text-green-pale'}`}>
-                          {item.price.toLocaleString()} BB
-                        </span>
-                      )}
+                      {!isOwned && <span className={`font-sans text-xs font-medium ${canAfford ? 'text-gold' : 'text-green-pale'}`}>{item.price.toLocaleString()} BB</span>}
                       {isOwned ? (
-                        <button
-                          onClick={() => handleEquip(item)}
-                          disabled={equipItem.isPending || unequipItem.isPending}
-                          className={equipped ? 'btn-ghost text-xs py-1 px-3' : 'btn-primary text-xs py-1 px-3'}
-                        >
+                        <button onClick={() => handleEquip(item)} disabled={equipItem.isPending || unequipItem.isPending} className={equipped ? 'btn-ghost text-xs py-1 px-3' : 'btn-primary text-xs py-1 px-3'}>
                           {equipped ? 'Unequip' : 'Equip'}
                         </button>
                       ) : (
-                        <button
-                          onClick={() => handleBuy(item)}
-                          disabled={!canAfford || buyItem.isPending}
-                          className="btn-primary text-xs py-1 px-3"
-                        >
+                        <button onClick={() => handleBuy(item)} disabled={!canAfford || buyItem.isPending} className="btn-primary text-xs py-1 px-3">
                           Buy
                         </button>
                       )}
@@ -342,7 +240,7 @@ function ShopSection({ playerId, bucks }: { playerId: string; bucks: number }) {
   )
 }
 
-// ─── Info / bio edit ──────────────────────────────────────────────────────────
+// ─── My Info ──────────────────────────────────────────────────────────────────
 function InfoSection({ playerId }: { playerId: string }) {
   const { data: player } = usePlayer(playerId)
   const updatePlayer = useUpdatePlayer()
@@ -364,26 +262,13 @@ function InfoSection({ playerId }: { playerId: string }) {
     <Card className="p-4 space-y-3">
       <div>
         <label className="field-label">Bio</label>
-        <textarea
-          rows={3}
-          className="field-input resize-none"
-          placeholder="A few words about your game…"
-          value={bio}
-          onChange={(e) => setBio(e.target.value)}
-        />
+        <textarea rows={3} className="field-input resize-none" placeholder="A few words about your game…" value={bio} onChange={(e) => setBio(e.target.value)} />
       </div>
       <div>
         <label className="field-label">Home course</label>
-        <input
-          className="field-input"
-          placeholder="Heron Point Golf Links"
-          value={homeCourse}
-          onChange={(e) => setHomeCourse(e.target.value)}
-        />
+        <input className="field-input" placeholder="Heron Point Golf Links" value={homeCourse} onChange={(e) => setHomeCourse(e.target.value)} />
       </div>
-      {updatePlayer.isError && (
-        <p className="font-sans text-xs text-red-600">{String(updatePlayer.error)}</p>
-      )}
+      {updatePlayer.isError && <p className="font-sans text-xs text-red-600">{String(updatePlayer.error)}</p>}
       <button onClick={handleSave} disabled={updatePlayer.isPending} className="btn-primary w-full">
         {updatePlayer.isPending ? 'Saving…' : 'Save'}
       </button>
@@ -396,19 +281,19 @@ export function ProfilePage() {
   const { profile, loading: authLoading } = useAuth()
   const playerId = profile?.player_id ?? undefined
   const { data: player, isLoading: playerLoading } = usePlayer(playerId)
-  const [tab, setTab] = useState<Tab>('greenbook')
+  const [tab, setTab] = useState<Tab>('profile')
 
   if (authLoading) {
     return (
-      <div className="p-4">
-        <div className="h-28 bg-green-dark/10 rounded-xl animate-pulse mb-4" />
+      <div className="max-w-lg mx-auto p-4">
+        <div className="h-24 bg-green-pale/50 rounded-xl animate-pulse mb-4" />
       </div>
     )
   }
 
   if (!playerId) {
     return (
-      <div className="p-4">
+      <div className="max-w-lg mx-auto p-4">
         <Card className="p-6 text-center">
           <p className="font-serif text-base text-green-dark mb-2">Not linked to a player yet</p>
           <p className="font-sans text-sm text-green-mid">
@@ -421,56 +306,31 @@ export function ProfilePage() {
 
   if (playerLoading || !player) {
     return (
-      <div className="p-4">
-        <div className="h-28 bg-green-dark/10 rounded-xl animate-pulse mb-4" />
+      <div className="max-w-lg mx-auto p-4">
+        <div className="h-24 bg-green-pale/50 rounded-xl animate-pulse mb-4" />
       </div>
     )
   }
 
   const TABS: { key: Tab; label: string }[] = [
+    { key: 'profile',   label: 'Profile' },
     { key: 'greenbook', label: 'Green Book' },
     { key: 'shop',      label: 'Shop' },
     { key: 'info',      label: 'My Info' },
   ]
 
   return (
-    <div className="p-4 pt-3">
-      {/* Player header — dark gradient banner */}
-      <div className="bg-gradient-to-br from-green-dark to-green-mid rounded-xl p-5 mb-4 flex items-center gap-4">
-        <PlayerAvatar
-          name={player.name}
-          initials={player.initials}
-          color={player.color}
-          avatarUrl={player.avatar_url}
-          frame={player.active_frame}
-          size="lg"
-        />
-        <div className="flex-1 min-w-0">
-          <p className="font-serif text-xl text-cream leading-tight">{player.name}</p>
-          {player.active_title && (
-            <p className="font-sans text-xs text-gold-light font-medium mt-0.5">{player.active_title}</p>
-          )}
-          <p className="font-sans text-sm text-cream/60 mt-2">
-            <span className="text-gold-light font-bold text-base">
-              {player.bagal_bucks.toLocaleString()}
-            </span>
-            {' '}
-            <span className="text-[11px] tracking-widest uppercase">BAGAL Bucks</span>
-          </p>
-        </div>
-      </div>
+    <div className="max-w-lg mx-auto p-4 pt-2">
+      <ProfileHeader playerId={playerId} showBucks />
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-green-dark/8 border border-green-pale rounded-xl p-1 mb-4">
+      <div className="flex gap-1 bg-green-faint rounded-lg p-1 mb-4">
         {TABS.map((t) => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
             className={[
-              'flex-1 font-sans text-xs py-2 rounded-lg transition-all',
-              tab === t.key
-                ? 'bg-green-dark text-cream shadow-sm'
-                : 'text-green-mid hover:text-green-dark hover:bg-green-faint',
+              'flex-1 font-sans text-xs py-1.5 rounded-md transition-all',
+              tab === t.key ? 'bg-green-dark text-cream shadow-sm' : 'text-green-mid hover:text-green-dark',
             ].join(' ')}
           >
             {t.label}
@@ -478,9 +338,10 @@ export function ProfilePage() {
         ))}
       </div>
 
-      {tab === 'greenbook' && <GreenBook playerId={playerId} />}
-      {tab === 'shop' && <ShopSection playerId={playerId} bucks={player.bagal_bucks} />}
-      {tab === 'info' && <InfoSection playerId={playerId} />}
+      {tab === 'profile'   && <ProfileTabs playerId={playerId} editable />}
+      {tab === 'greenbook' && <GreenBookOwn playerId={playerId} />}
+      {tab === 'shop'      && <ShopSection playerId={playerId} bucks={player.bagal_bucks} />}
+      {tab === 'info'      && <InfoSection playerId={playerId} />}
     </div>
   )
 }

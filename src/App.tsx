@@ -21,6 +21,7 @@ import { AccountsAdminPage } from '@/pages/admin/AccountsAdminPage'
 
 // Player self-service pages
 import { ProfilePage } from '@/pages/ProfilePage'
+import { PlayerProfilePage } from '@/pages/PlayerProfilePage'
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
         <Route index element={<LeaderboardPage />} />
         <Route path="tournaments" element={<TournamentsPage />} />
         <Route path="players" element={<PlayersPage />} />
+        <Route path="players/:playerId" element={<PlayerProfilePage />} />
         <Route path="history" element={<HistoryPage />} />
       </Route>
 

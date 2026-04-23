@@ -119,3 +119,13 @@ export interface PlayerItem {
   item_name: string
   purchased_at: string
 }
+
+export interface FavouriteCourse {
+  id: string
+  player_id: string
+  rank: number
+  name: string
+  photo_url: string | null
+  notes: string | null
+  created_at: string
+}

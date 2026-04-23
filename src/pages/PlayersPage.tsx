@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { SectionLabel } from '@/components/ui/SectionLabel'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PlayerAvatar } from '@/components/ui/PlayerAvatar'
@@ -24,9 +25,10 @@ export function PlayersPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {players.map((p) => (
-            <div
+            <Link
               key={p.id}
-              className="rounded-xl border border-green-pale shadow-card bg-white overflow-hidden flex flex-col"
+              to={`/players/${p.id}`}
+              className="rounded-xl border border-green-pale shadow-card bg-white overflow-hidden flex flex-col hover:shadow-md hover:-translate-y-0.5 transition-all"
             >
               {/* Colored top banner with player color */}
               <div
@@ -86,7 +88,7 @@ export function PlayersPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}
