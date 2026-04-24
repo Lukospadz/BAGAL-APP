@@ -50,7 +50,7 @@ export function useUpsertFavouriteCourse() {
 export function useDeleteFavouriteCourse() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, playerId }: { id: string; playerId: string }) => {
+    mutationFn: async ({ id }: { id: string; playerId: string }) => {
       const { error } = await supabase
         .from('favourite_courses')
         .delete()

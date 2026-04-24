@@ -1,6 +1,5 @@
 import { useState, useRef } from 'react'
 import { useParams } from 'react-router-dom'
-import { useAuth } from '@/context/AuthContext'
 import { usePlayer, useUpdatePlayer } from '@/hooks/usePlayers'
 import { usePersonalRounds } from '@/hooks/usePersonalRounds'
 import {
@@ -9,10 +8,12 @@ import {
   useDeleteFavouriteCourse,
   useUploadCoursePhoto,
 } from '@/hooks/useFavouriteCourses'
+import { usePlayerTrophies } from '@/hooks/useTrophies'
 import { PlayerAvatar } from '@/components/ui/PlayerAvatar'
 import { StarRating } from '@/components/ui/StarRating'
 import { Card } from '@/components/ui/Card'
 import type { Bag, BagItem, FavouriteCourse } from '@/types/db'
+import type { TrophyRarity } from '@/lib/trophies'
 
 // ─── Bag ──────────────────────────────────────────────────────────────────────
 const CLUB_TYPES = [
@@ -366,6 +367,111 @@ function GreenBookSection({ playerId }: { playerId: string }) {
   )
 }
 
+// ─── Trophy Room ─────────────────────────────────────────────────────────────
+
+const RARITY_STYLES: Record<
+  TrophyRarity,
+  { border: string; badge: string; label: string; glow: string }
+> = {
+  common:    { border: 'border-gray-200',      badge: 'bg-gray-100 text-gray-500',              label: 'Common',    glow: '' },
+  uncommon:  { border: 'border-green-light/40', badge: 'bg-green-faint text-green-mid',          label: 'Uncommon',  glow: '' },
+  rare:      { border: 'border-gold/60',        badge: 'bg-gold-faint text-[#8a6d0e]',           label: 'Rare',      glow: 'shadow-[0_0_12px_rgba(212,165,32,0.3)]' },
+  epic:      { border: 'border-purple-300',     badge: 'bg-purple-50 text-purple-700',           label: 'Epic',      glow: 'shadow-[0_0_14px_rgba(168,85,247,0.35)]' },
+  legendary: { border: 'border-coral/60',       badge: 'bg-coral/10 text-coral-dark font-bold',  label: 'Legendary', glow: 'shadow-[0_0_18px_rgba(255,107,91,0.4)]' },
+}
+
+function TrophySection({ playerId }: { playerId: string }) {
+  const { trophies, isLoading } = usePlayerTrophies(playerId)
+  const [expanded, setExpanded] = useState<string | null>(null)
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-3 gap-2">
+        {Array.from({ length: 9 }).map((_, i) => (
+          <div key={i} className="h-28 bg-green-pale/50 rounded-2xl animate-pulse" />
+        ))}
+      </div>
+    )
+  }
+
+  const unlocked = trophies.filter((t) => t.unlocked).length
+
+  return (
+    <div>
+      <p className="font-sans text-xs text-green-mid text-center mb-3">
+        <span className="font-semibold text-green-dark">{unlocked}</span>
+        {' / '}
+        {trophies.length} unlocked
+      </p>
+
+      <div className="grid grid-cols-3 gap-2">
+        {trophies.map((t) => {
+          const style = RARITY_STYLES[t.rarity]
+          const isOpen = expanded === t.id
+          return (
+            <button
+              key={t.id}
+              onClick={() => setExpanded(isOpen ? null : t.id)}
+              className={[
+                'relative flex flex-col items-center gap-1.5 p-3 rounded-2xl border-2 transition-all text-left',
+                t.unlocked
+                  ? `bg-white ${style.border} ${style.glow}`
+                  : 'bg-gray-50/60 border-gray-100 grayscale opacity-40',
+              ].join(' ')}
+            >
+              <span className="text-4xl leading-none" role="img" aria-label={t.name}>
+                {t.icon}
+              </span>
+              <p
+                className={[
+                  'font-sans text-[9px] font-semibold tracking-wide uppercase text-center leading-tight',
+                  t.unlocked ? 'text-green-dark' : 'text-gray-400',
+                ].join(' ')}
+              >
+                {t.name}
+              </p>
+              {t.unlocked && (
+                <span
+                  className={[
+                    'font-sans text-[8px] px-1.5 py-0.5 rounded-full tracking-wide',
+                    style.badge,
+                  ].join(' ')}
+                >
+                  {style.label}
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Description popover */}
+      {expanded && (() => {
+        const t = trophies.find((x) => x.id === expanded)
+        if (!t) return null
+        const style = RARITY_STYLES[t.rarity]
+        return (
+          <div
+            className={[
+              'mt-3 flex items-start gap-3 p-4 rounded-2xl border-2',
+              t.unlocked ? `bg-white ${style.border}` : 'bg-gray-50 border-gray-200',
+            ].join(' ')}
+          >
+            <span className="text-3xl leading-none flex-shrink-0">{t.icon}</span>
+            <div>
+              <p className="font-sans text-sm font-semibold text-green-dark">{t.name}</p>
+              <p className="font-sans text-xs text-green-mid mt-0.5">{t.description}</p>
+              {!t.unlocked && (
+                <p className="font-sans text-[10px] text-gray-400 mt-1 italic">Locked</p>
+              )}
+            </div>
+          </div>
+        )
+      })()}
+    </div>
+  )
+}
+
 // ─── Profile header ───────────────────────────────────────────────────────────
 function ProfileHeader({
   playerId,
@@ -422,7 +528,7 @@ function ProfileHeader({
 }
 
 // ─── Shared profile tabs renderer ────────────────────────────────────────────
-type ProfileTab = 'bag' | 'top4' | 'rounds'
+type ProfileTab = 'bag' | 'top4' | 'rounds' | 'trophies'
 
 function ProfileTabs({
   playerId,
@@ -436,9 +542,10 @@ function ProfileTabs({
   const updatePlayer = useUpdatePlayer()
 
   const TABS: { key: ProfileTab; label: string }[] = [
-    { key: 'top4',   label: 'Top 4 Courses' },
-    { key: 'rounds', label: 'Green Book' },
-    { key: 'bag',    label: 'The Bag' },
+    { key: 'top4',     label: 'Top 4' },
+    { key: 'rounds',   label: 'Rounds' },
+    { key: 'bag',      label: 'The Bag' },
+    { key: 'trophies', label: 'Trophies' },
   ]
 
   return (
@@ -449,7 +556,7 @@ function ProfileTabs({
             key={t.key}
             onClick={() => setTab(t.key)}
             className={[
-              'flex-1 font-sans text-xs py-1.5 rounded-md transition-all',
+              'flex-1 font-sans text-[11px] py-1.5 rounded-md transition-all',
               tab === t.key
                 ? 'bg-green-dark text-cream shadow-sm'
                 : 'text-green-mid hover:text-green-dark',
@@ -466,9 +573,10 @@ function ProfileTabs({
         <BagSection
           bag={player.bag ?? {}}
           editable={editable}
-          onSave={editable ? (bag) => updatePlayer.mutateAsync({ id: playerId, bag }) : undefined}
+          onSave={editable ? async (bag) => { await updatePlayer.mutateAsync({ id: playerId, bag }) } : undefined}
         />
       )}
+      {tab === 'trophies' && <TrophySection playerId={playerId} />}
     </>
   )
 }

@@ -39,7 +39,7 @@ function CreatePlayerForm({ onDone }: { onDone: () => void }) {
       avatar_url: null,
       bio: null,
       home_course: null,
-      bag: {},
+      bag: [],
       bagal_bucks: 0,
       active_title: null,
       active_frame: null,

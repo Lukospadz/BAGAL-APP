@@ -18,6 +18,21 @@ export function useScoresByTournament(tournamentId: string | undefined) {
   })
 }
 
+export function useScoresByPlayer(playerId: string | undefined) {
+  return useQuery({
+    queryKey: ['scores', 'player', playerId],
+    enabled: !!playerId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('scores')
+        .select('*')
+        .eq('player_id', playerId!)
+      if (error) throw error
+      return data as Score[]
+    },
+  })
+}
+
 export function useScoresBySeason(seasonId: string | undefined) {
   return useQuery({
     queryKey: ['scores', 'season', seasonId],
