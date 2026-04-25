@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/context/AuthContext'
 
 export function ResetPasswordPage() {
   const navigate = useNavigate()
+  const { refreshProfile } = useAuth()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -20,6 +22,7 @@ export function ResetPasswordPage() {
       setSaving(false)
       return
     }
+    await refreshProfile()
     navigate('/', { replace: true })
   }
 

@@ -29,7 +29,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
-  const [needsPasswordReset, setNeedsPasswordReset] = useState(false)
+  const [needsPasswordReset, setNeedsPasswordReset] = useState(
+    () => window.location.hash.includes('type=recovery') || window.location.search.includes('type=recovery')
+  )
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -48,6 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (event === 'PASSWORD_RECOVERY') {
         setNeedsPasswordReset(true)
         setLoading(false)
+        history.replaceState(null, '', window.location.pathname)
         return
       }
       if (session) {
