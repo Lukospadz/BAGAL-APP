@@ -18,6 +18,7 @@ interface AuthContextValue {
   isPlayer: boolean
   signInWithPassword: (email: string, password: string) => Promise<{ error: string | null }>
   signUp: (email: string, password: string) => Promise<{ error: string | null }>
+  refreshProfile: () => Promise<void>
   signOut: () => Promise<void>
 }
 
@@ -73,6 +74,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error?.message ?? null }
   }
 
+  async function refreshProfile() {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) await fetchProfile(session.user.id)
+  }
+
   async function signOut() {
     await supabase.auth.signOut()
   }
@@ -88,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isPlayer: profile !== null,
         signInWithPassword,
         signUp,
+        refreshProfile,
         signOut,
       }}
     >

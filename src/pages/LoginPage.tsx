@@ -4,6 +4,8 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useAuth } from '@/context/AuthContext'
+import { usePlayers } from '@/hooks/usePlayers'
+import { supabase } from '@/lib/supabase'
 
 const schema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -12,10 +14,10 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 export function LoginPage() {
-  const { signInWithPassword, signUp, isAdmin } = useAuth()
+  const { signInWithPassword, signUp, refreshProfile, user, isAdmin } = useAuth()
   const navigate = useNavigate()
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
-  const [signedUp, setSignedUp] = useState(false)
+  const [pickingPlayer, setPickingPlayer] = useState(false)
 
   const {
     register,
@@ -42,7 +44,7 @@ export function LoginPage() {
         setError('password', { message: error })
         return
       }
-      setSignedUp(true)
+      setPickingPlayer(true)
       return
     }
     const { error } = await signInWithPassword(email, password)
@@ -51,23 +53,15 @@ export function LoginPage() {
     }
   }
 
-  if (signedUp) {
+  if (pickingPlayer) {
     return (
-      <div className="min-h-screen bg-green-dark flex items-center justify-center p-4">
-        <div className="bg-cream rounded-xl p-8 max-w-sm w-full text-center shadow-lg">
-          <div className="text-4xl mb-4">⛳</div>
-          <h2 className="font-serif text-xl text-green-dark mb-2">Account created!</h2>
-          <p className="font-sans text-sm text-green-mid">
-            You're in. Ask the admin to link your account to your player profile, then sign in.
-          </p>
-          <button
-            onClick={() => { setSignedUp(false); setMode('signin') }}
-            className="btn-primary w-full mt-6"
-          >
-            Sign in
-          </button>
-        </div>
-      </div>
+      <PickPlayerScreen
+        userId={user?.id}
+        onDone={async () => {
+          await refreshProfile()
+          navigate('/', { replace: true })
+        }}
+      />
     )
   }
 
@@ -144,6 +138,68 @@ export function LoginPage() {
         >
           ← Back to leaderboard
         </Link>
+      </div>
+    </div>
+  )
+}
+
+function PickPlayerScreen({
+  userId,
+  onDone,
+}: {
+  userId: string | undefined
+  onDone: () => void
+}) {
+  const { data: players } = usePlayers()
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function pick(playerId: string) {
+    if (!userId) return
+    setSaving(true)
+    setError(null)
+    const { error } = await supabase
+      .from('profiles')
+      .update({ player_id: playerId })
+      .eq('id', userId)
+    if (error) {
+      setError('Something went wrong. Try again.')
+      setSaving(false)
+      return
+    }
+    onDone()
+  }
+
+  return (
+    <div className="min-h-screen bg-green-dark flex items-center justify-center p-4">
+      <div className="bg-cream rounded-xl p-8 max-w-sm w-full shadow-lg">
+        <div className="text-center mb-6">
+          <h2 className="font-serif text-2xl text-green-dark mb-1">Who are you?</h2>
+          <p className="font-sans text-sm text-green-mid">Pick your player profile</p>
+        </div>
+
+        <div className="space-y-2">
+          {players?.map((player) => (
+            <button
+              key={player.id}
+              onClick={() => pick(player.id)}
+              disabled={saving}
+              className="w-full flex items-center gap-3 p-3 rounded-xl border border-bone bg-white hover:bg-bone transition-colors disabled:opacity-50"
+            >
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center font-sans text-sm font-bold text-white flex-shrink-0"
+                style={{ backgroundColor: player.color }}
+              >
+                {player.initials}
+              </div>
+              <span className="font-serif text-base text-green-dark">{player.name}</span>
+            </button>
+          ))}
+        </div>
+
+        {error && (
+          <p className="font-sans text-xs text-red-600 mt-3 text-center">{error}</p>
+        )}
       </div>
     </div>
   )
