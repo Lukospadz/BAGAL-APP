@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useParams } from 'react-router-dom'
-import { usePlayer, useUpdatePlayer } from '@/hooks/usePlayers'
+import { usePlayer, useUpdatePlayer, usePlayers } from '@/hooks/usePlayers'
 import { usePersonalRounds } from '@/hooks/usePersonalRounds'
 import {
   useFavouriteCourses,
@@ -9,6 +9,9 @@ import {
   useUploadCoursePhoto,
 } from '@/hooks/useFavouriteCourses'
 import { usePlayerTrophies } from '@/hooks/useTrophies'
+import { useScoresWithTournaments } from '@/hooks/useScores'
+import { useSeasons } from '@/hooks/useSeasons'
+import { useAuth } from '@/context/AuthContext'
 import { PlayerAvatar } from '@/components/ui/PlayerAvatar'
 import { StarRating } from '@/components/ui/StarRating'
 import { Card } from '@/components/ui/Card'
@@ -472,6 +475,159 @@ function TrophySection({ playerId }: { playerId: string }) {
   )
 }
 
+// ─── Compare panel ────────────────────────────────────────────────────────────
+
+function ComparePanel({ profilePlayerId, myPlayerId }: { profilePlayerId: string; myPlayerId: string }) {
+  const { data: theirScores } = useScoresWithTournaments(profilePlayerId)
+  const { data: myScores }    = useScoresWithTournaments(myPlayerId)
+  const { data: seasons }     = useSeasons()
+  const { data: players }     = usePlayers()
+
+  if (!theirScores || !myScores || !seasons || !players) {
+    return <div className="h-48 bg-green-pale/40 rounded-2xl animate-pulse mb-4" />
+  }
+
+  const me   = players.find(p => p.id === myPlayerId)
+  const them = players.find(p => p.id === profilePlayerId)
+
+  // Round-level stats (all rounds)
+  function roundStats(scores: typeof myScores) {
+    const all = scores.map(s => s.gross_score)
+    if (!all.length) return { best: null, worst: null, avg: null }
+    return {
+      best:  Math.min(...all),
+      worst: Math.max(...all),
+      avg:   Math.round(all.reduce((a, b) => a + b, 0) / all.length * 10) / 10,
+    }
+  }
+
+  // Tournament-level stats (round 1 only has position)
+  function tourneyStats(scores: typeof myScores) {
+    const t1 = scores.filter(s => s.round_number === 1 && s.position != null)
+    return {
+      wins:   t1.filter(s => s.position === 1).length,
+      played: t1.length,
+      lastWin: t1
+        .filter(s => s.position === 1)
+        .sort((a, b) => (b.tournaments.date ?? '').localeCompare(a.tournaments.date ?? ''))[0]
+        ?.tournaments.name ?? null,
+    }
+  }
+
+  // Green jackets
+  const greenJackets = (pid: string) => seasons.filter(s => s.champion_player_id === pid).length
+
+  // Head-to-head: shared tournaments where both have position
+  const myTourneyMap    = new Map(myScores.filter(s => s.round_number === 1 && s.position != null).map(s => [s.tournament_id, s.position!]))
+  const theirTourneyMap = new Map(theirScores.filter(s => s.round_number === 1 && s.position != null).map(s => [s.tournament_id, s.position!]))
+  let myWins = 0, theirWins = 0
+  for (const [tid, myPos] of myTourneyMap) {
+    const theirPos = theirTourneyMap.get(tid)
+    if (theirPos == null) continue
+    if (myPos < theirPos) myWins++
+    else if (theirPos < myPos) theirWins++
+  }
+  const shared = myWins + theirWins
+
+  const myStats    = roundStats(myScores)
+  const theirStats = roundStats(theirScores)
+  const myT        = tourneyStats(myScores)
+  const theirT     = tourneyStats(theirScores)
+  const myJackets  = greenJackets(myPlayerId)
+  const theirJackets = greenJackets(profilePlayerId)
+
+  // Helper: which side wins a stat (lower = better for scores, higher = better for wins/bucks/jackets)
+  function winner(myVal: number | null, theirVal: number | null, lowerBetter = false): 'me' | 'them' | 'tie' {
+    if (myVal == null || theirVal == null) return 'tie'
+    if (myVal === theirVal) return 'tie'
+    return lowerBetter
+      ? (myVal < theirVal ? 'me' : 'them')
+      : (myVal > theirVal ? 'me' : 'them')
+  }
+
+  function StatRow({ label, myVal, theirVal, lowerBetter = false }: {
+    label: string
+    myVal: string | number | null
+    theirVal: string | number | null
+    lowerBetter?: boolean
+  }) {
+    const w = winner(
+      typeof myVal === 'number' ? myVal : null,
+      typeof theirVal === 'number' ? theirVal : null,
+      lowerBetter
+    )
+    return (
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1 py-2 border-b border-green-pale last:border-0">
+        <div className={`font-sans text-sm font-semibold text-right ${w === 'me' ? 'text-gold' : 'text-green-dark'}`}>
+          {myVal ?? '—'}
+          {w === 'me' && <span className="ml-1 text-gold text-xs">●</span>}
+        </div>
+        <div className="font-sans text-[9px] uppercase tracking-widest text-green-mid/60 text-center px-2 whitespace-nowrap">
+          {label}
+        </div>
+        <div className={`font-sans text-sm font-semibold text-left ${w === 'them' ? 'text-gold' : 'text-green-dark'}`}>
+          {w === 'them' && <span className="mr-1 text-gold text-xs">●</span>}
+          {theirVal ?? '—'}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <Card className="mb-4 overflow-hidden">
+      {/* Header row */}
+      <div className="grid grid-cols-[1fr_auto_1fr] bg-green-dark px-4 py-3">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-full flex items-center justify-center font-sans text-xs font-bold text-white flex-shrink-0" style={{ backgroundColor: me?.color }}>
+            {me?.initials}
+          </div>
+          <span className="font-serif text-sm text-cream truncate">{me?.name}</span>
+        </div>
+        <span className="font-sans text-[10px] text-cream/40 uppercase tracking-widest self-center px-2">vs</span>
+        <div className="flex items-center gap-2 justify-end">
+          <span className="font-serif text-sm text-cream truncate">{them?.name}</span>
+          <div className="w-7 h-7 rounded-full flex items-center justify-center font-sans text-xs font-bold text-white flex-shrink-0" style={{ backgroundColor: them?.color }}>
+            {them?.initials}
+          </div>
+        </div>
+      </div>
+
+      {/* Head-to-head banner */}
+      {shared > 0 && (
+        <div className="bg-green-dark/5 border-b border-green-pale px-4 py-2 flex items-center justify-center gap-3">
+          <span className={`font-display text-2xl font-bold ${myWins >= theirWins ? 'text-gold' : 'text-green-dark'}`}>{myWins}</span>
+          <span className="font-sans text-[10px] text-green-mid/60 uppercase tracking-widest">Head to head</span>
+          <span className={`font-display text-2xl font-bold ${theirWins >= myWins ? 'text-gold' : 'text-green-dark'}`}>{theirWins}</span>
+        </div>
+      )}
+
+      {/* Stat rows */}
+      <div className="px-4">
+        <StatRow label="Best round"    myVal={myStats.best}    theirVal={theirStats.best}    lowerBetter />
+        <StatRow label="Avg score"     myVal={myStats.avg}     theirVal={theirStats.avg}     lowerBetter />
+        <StatRow label="Worst round"   myVal={myStats.worst}   theirVal={theirStats.worst}   lowerBetter />
+        <StatRow label="Wins"          myVal={myT.wins}        theirVal={theirT.wins} />
+        <StatRow label="Green jackets" myVal={myJackets}       theirVal={theirJackets} />
+        <StatRow label="Bagal Bucks"   myVal={me?.bagal_bucks ?? null} theirVal={them?.bagal_bucks ?? null} />
+      </div>
+
+      {/* Last wins */}
+      {(myT.lastWin || theirT.lastWin) && (
+        <div className="grid grid-cols-2 border-t border-green-pale">
+          <div className="px-4 py-3 border-r border-green-pale">
+            <p className="font-sans text-[9px] uppercase tracking-widest text-green-mid/60 mb-0.5">Last win</p>
+            <p className="font-serif text-xs text-green-dark">{myT.lastWin ?? '—'}</p>
+          </div>
+          <div className="px-4 py-3">
+            <p className="font-sans text-[9px] uppercase tracking-widest text-green-mid/60 mb-0.5">Last win</p>
+            <p className="font-serif text-xs text-green-dark">{theirT.lastWin ?? '—'}</p>
+          </div>
+        </div>
+      )}
+    </Card>
+  )
+}
+
 // ─── Profile header ───────────────────────────────────────────────────────────
 function ProfileHeader({
   playerId,
@@ -585,6 +741,11 @@ function ProfileTabs({
 export function PlayerProfilePage() {
   const { playerId } = useParams<{ playerId: string }>()
   const { data: player, isLoading } = usePlayer(playerId)
+  const { profile } = useAuth()
+  const [comparing, setComparing] = useState(false)
+
+  const myPlayerId = profile?.player_id
+  const canCompare = !!myPlayerId && !!playerId && myPlayerId !== playerId
 
   if (isLoading) {
     return (
@@ -607,6 +768,25 @@ export function PlayerProfilePage() {
   return (
     <div className="p-4 pt-2 max-w-lg mx-auto">
       <ProfileHeader playerId={player.id} showBucks={false} />
+
+      {canCompare && (
+        <button
+          onClick={() => setComparing(c => !c)}
+          className={[
+            'w-full mb-4 py-2 rounded-xl font-sans text-sm font-semibold border transition-colors',
+            comparing
+              ? 'bg-green-dark text-cream border-green-dark'
+              : 'bg-white text-green-dark border-bone hover:border-green-mid',
+          ].join(' ')}
+        >
+          {comparing ? 'Hide comparison' : 'Compare with me'}
+        </button>
+      )}
+
+      {comparing && myPlayerId && (
+        <ComparePanel profilePlayerId={player.id} myPlayerId={myPlayerId} />
+      )}
+
       <ProfileTabs playerId={player.id} editable={false} />
     </div>
   )

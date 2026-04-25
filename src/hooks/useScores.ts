@@ -33,6 +33,25 @@ export function useScoresByPlayer(playerId: string | undefined) {
   })
 }
 
+export interface ScoreWithTournament extends Score {
+  tournaments: { id: string; name: string; date: string | null }
+}
+
+export function useScoresWithTournaments(playerId: string | undefined) {
+  return useQuery({
+    queryKey: ['scores', 'player', 'with-tournaments', playerId],
+    enabled: !!playerId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('scores')
+        .select('*, tournaments(id, name, date)')
+        .eq('player_id', playerId!)
+      if (error) throw error
+      return data as ScoreWithTournament[]
+    },
+  })
+}
+
 export function useScoresBySeason(seasonId: string | undefined) {
   return useQuery({
     queryKey: ['scores', 'season', seasonId],
