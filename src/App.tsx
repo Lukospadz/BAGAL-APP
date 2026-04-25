@@ -2,6 +2,7 @@ import { Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { AdminRoute, PlayerRoute } from '@/components/auth/ProtectedRoute'
 import { PublicLayout } from '@/components/layout/PublicLayout'
 import { AdminShell } from '@/components/layout/AdminShell'
+import { useAuth } from '@/context/AuthContext'
 
 // Public pages
 import { LeaderboardPage } from '@/pages/LeaderboardPage'
@@ -22,6 +23,7 @@ import { PropsAdminPage } from '@/pages/admin/PropsAdminPage'
 // Player self-service pages
 import { ProfilePage } from '@/pages/ProfilePage'
 import { PlayerProfilePage } from '@/pages/PlayerProfilePage'
+import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
 
 // Redirect old /admin/seasons/:seasonId deep-links to the accordion page
 function SeasonIdRedirect() {
@@ -30,6 +32,10 @@ function SeasonIdRedirect() {
 }
 
 export default function App() {
+  const { needsPasswordReset } = useAuth()
+
+  if (needsPasswordReset) return <ResetPasswordPage />
+
   return (
     <Routes>
       {/* Public routes */}

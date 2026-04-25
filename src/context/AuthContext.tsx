@@ -16,6 +16,7 @@ interface AuthContextValue {
   loading: boolean
   isAdmin: boolean
   isPlayer: boolean
+  needsPasswordReset: boolean
   signInWithPassword: (email: string, password: string) => Promise<{ error: string | null }>
   signUp: (email: string, password: string) => Promise<{ error: string | null }>
   refreshProfile: () => Promise<void>
@@ -28,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [needsPasswordReset, setNeedsPasswordReset] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -41,8 +43,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session)
+      if (event === 'PASSWORD_RECOVERY') {
+        setNeedsPasswordReset(true)
+        setLoading(false)
+        return
+      }
       if (session) {
         fetchProfile(session.user.id)
       } else {
@@ -92,6 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         isAdmin: profile?.role === 'admin',
         isPlayer: profile !== null,
+        needsPasswordReset,
         signInWithPassword,
         signUp,
         refreshProfile,
