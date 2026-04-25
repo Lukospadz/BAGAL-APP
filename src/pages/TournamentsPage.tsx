@@ -2,10 +2,14 @@ import { useState, useEffect } from 'react'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PlayerAvatar } from '@/components/ui/PlayerAvatar'
 import { TournamentSheet } from '@/components/ui/TournamentSheet'
+import { SectionLabel } from '@/components/ui/SectionLabel'
+import { Card } from '@/components/ui/Card'
 import { useSeasons } from '@/hooks/useSeasons'
 import { useTournaments } from '@/hooks/useTournaments'
 import { useScoresBySeason } from '@/hooks/useScores'
 import { usePlayers } from '@/hooks/usePlayers'
+import { useProspectCourses, useAddProspectCourse, useDeleteProspectCourse } from '@/hooks/useProspectCourses'
+import { useAuth } from '@/context/AuthContext'
 import type { Tournament, Score, Player, Season } from '@/types/db'
 
 // ─── Season champion banner (completed seasons) ────────────────────────────────
@@ -435,6 +439,134 @@ export function TournamentsPage() {
         <EmptyState message="No seasons yet" hint="An admin will set up the first season." />
       ) : (
         <SeasonCourse season={currentSeason} players={players ?? []} />
+      )}
+
+      <ProspectCoursesSection />
+    </div>
+  )
+}
+
+// ─── Prospect courses ─────────────────────────────────────────────────────────
+
+function ProspectCoursesSection() {
+  const { data: courses } = useProspectCourses()
+  const { profile } = useAuth()
+  const { data: players } = usePlayers()
+  const addCourse = useAddProspectCourse()
+  const deleteCourse = useDeleteProspectCourse()
+
+  const [adding, setAdding] = useState(false)
+  const [name, setName] = useState('')
+  const [location, setLocation] = useState('')
+  const [notes, setNotes] = useState('')
+
+  const myPlayerId = profile?.player_id
+
+  async function handleAdd() {
+    if (!name.trim() || !myPlayerId) return
+    await addCourse.mutateAsync({
+      playerId: myPlayerId,
+      name: name.trim(),
+      location: location.trim() || null,
+      notes: notes.trim() || null,
+    })
+    setName(''); setLocation(''); setNotes(''); setAdding(false)
+  }
+
+  return (
+    <div className="mt-2">
+      <SectionLabel>Bucket list courses</SectionLabel>
+
+      {!courses?.length && (
+        <p className="font-serif italic text-green-mid text-sm text-center py-4">
+          No courses on the list yet.
+        </p>
+      )}
+
+      <div className="space-y-2 mb-3">
+        {courses?.map((c) => {
+          const suggester = players?.find(p => p.id === c.player_id)
+          const canDelete = myPlayerId === c.player_id || profile?.role === 'admin'
+          return (
+            <Card key={c.id} className="px-4 py-3 flex items-start gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="font-serif text-sm text-green-dark">{c.name}</p>
+                {c.location && (
+                  <p className="font-sans text-xs text-green-mid">{c.location}</p>
+                )}
+                {c.notes && (
+                  <p className="font-sans text-xs text-green-mid/70 italic mt-0.5">{c.notes}</p>
+                )}
+                {suggester && (
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                    <div
+                      className="w-4 h-4 rounded-full flex items-center justify-center font-sans text-[8px] font-bold text-white flex-shrink-0"
+                      style={{ backgroundColor: suggester.color }}
+                    >
+                      {suggester.initials}
+                    </div>
+                    <span className="font-sans text-[10px] text-green-mid/60">{suggester.name}</span>
+                  </div>
+                )}
+              </div>
+              {canDelete && (
+                <button
+                  onClick={() => deleteCourse.mutate(c.id)}
+                  className="font-sans text-xs text-green-mid/40 hover:text-red-500 transition-colors flex-shrink-0 mt-0.5"
+                >
+                  ✕
+                </button>
+              )}
+            </Card>
+          )
+        })}
+      </div>
+
+      {myPlayerId && !adding && (
+        <button onClick={() => setAdding(true)} className="btn-ghost text-sm w-full">
+          + Add a course
+        </button>
+      )}
+
+      {adding && (
+        <Card className="p-4 space-y-3">
+          <div>
+            <label className="field-label">Course name</label>
+            <input
+              className="field-input text-sm"
+              placeholder="e.g. Augusta National"
+              value={name}
+              onChange={e => setName(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="field-label">Location (optional)</label>
+            <input
+              className="field-input text-sm"
+              placeholder="e.g. Augusta, Georgia"
+              value={location}
+              onChange={e => setLocation(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="field-label">Notes (optional)</label>
+            <input
+              className="field-input text-sm"
+              placeholder="e.g. Saw it on YouTube, looks insane"
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+            />
+          </div>
+          {addCourse.isError && (
+            <p className="font-sans text-xs text-red-600">{String(addCourse.error)}</p>
+          )}
+          <div className="flex gap-2">
+            <button onClick={handleAdd} disabled={!name.trim() || addCourse.isPending} className="btn-primary text-sm flex-1">
+              {addCourse.isPending ? 'Adding…' : 'Add'}
+            </button>
+            <button onClick={() => setAdding(false)} className="btn-ghost text-sm">Cancel</button>
+          </div>
+        </Card>
       )}
     </div>
   )
