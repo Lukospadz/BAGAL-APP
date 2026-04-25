@@ -2,6 +2,24 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import type { PersonalRound } from '@/types/db'
 
+export interface PersonalRoundWithPlayer extends PersonalRound {
+  players: { id: string; name: string; initials: string; color: string; avatar_url: string | null }
+}
+
+export function useAllPersonalRounds() {
+  return useQuery({
+    queryKey: ['personal_rounds', 'all'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('personal_rounds')
+        .select('*, players(id, name, initials, color, avatar_url)')
+        .order('date', { ascending: false })
+      if (error) throw error
+      return data as PersonalRoundWithPlayer[]
+    },
+  })
+}
+
 export function usePersonalRounds(playerId: string | undefined) {
   return useQuery({
     queryKey: ['personal_rounds', playerId],

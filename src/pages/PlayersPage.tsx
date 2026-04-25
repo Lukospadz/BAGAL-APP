@@ -1,141 +1,242 @@
-import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { EmptyState } from '@/components/ui/EmptyState'
+import { SectionLabel } from '@/components/ui/SectionLabel'
+import { Card } from '@/components/ui/Card'
 import { PlayerAvatar } from '@/components/ui/PlayerAvatar'
+import { StarRating } from '@/components/ui/StarRating'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { usePlayers } from '@/hooks/usePlayers'
-import type { Player } from '@/types/db'
+import { useAllPersonalRounds } from '@/hooks/usePersonalRounds'
+import { useProspectCourses, useAddProspectCourse, useDeleteProspectCourse } from '@/hooks/useProspectCourses'
+import { useAuth } from '@/context/AuthContext'
+import { useState } from 'react'
 
-type SortKey = 'name' | 'bucks'
-type ViewMode = 'card' | 'list'
-
-function sortPlayers(players: Player[], key: SortKey): Player[] {
-  return [...players].sort((a, b) =>
-    key === 'bucks' ? b.bagal_bucks - a.bagal_bucks : a.name.localeCompare(b.name)
-  )
-}
-
-function PlayerCard({ p }: { p: Player }) {
+// ─── Compact player row ───────────────────────────────────────────────────────
+function PlayerRow() {
+  const { data: players } = usePlayers()
+  if (!players?.length) return null
   return (
-    <Link
-      to={`/players/${p.id}`}
-      className="rounded-xl border border-green-pale shadow-card bg-white overflow-hidden flex flex-col hover:shadow-md hover:-translate-y-0.5 transition-all"
-    >
-      <div className="h-14 relative" style={{ background: `linear-gradient(135deg, ${p.color}, ${p.color}cc)` }}>
-        <div className="absolute left-1/2 -translate-x-1/2 -bottom-8">
-          <div className="rounded-full bg-white p-1 shadow-card">
-            <PlayerAvatar name={p.name} initials={p.initials} color={p.color}
-              avatarUrl={p.avatar_url} frame={p.active_frame} size="lg" />
-          </div>
-        </div>
-      </div>
-      <div className="pt-10 pb-4 px-4 text-center flex-1 flex flex-col">
-        <p className="font-serif text-base text-green-dark leading-tight">{p.name}</p>
-        {p.active_title ? (
-          <p className="font-sans text-[11px] text-gold font-medium mt-1 italic">&ldquo;{p.active_title}&rdquo;</p>
-        ) : (
-          <p className="font-sans text-[11px] text-green-mid/50 mt-1 italic">No title equipped</p>
-        )}
-        {p.home_course && (
-          <p className="font-sans text-xs text-green-mid mt-2">
-            <span className="tracking-widest uppercase text-[9px] text-green-mid/60">Home </span>
-            {p.home_course}
-          </p>
-        )}
-        {p.bio && (
-          <p className="font-serif text-xs italic text-green-mid/70 mt-2 line-clamp-2">{p.bio}</p>
-        )}
-        <div className="mt-auto pt-3">
-          <div className="bg-green-faint rounded-lg px-3 py-2 flex items-center justify-center gap-1.5">
-            <span className="font-serif text-lg text-gold font-bold leading-none">{p.bagal_bucks.toLocaleString()}</span>
-            <span className="font-sans text-[10px] tracking-widest uppercase text-green-mid">BB</span>
-          </div>
-        </div>
-      </div>
-    </Link>
+    <div className="flex gap-3 overflow-x-auto pb-1 mb-1">
+      {players.map((p) => (
+        <Link key={p.id} to={`/players/${p.id}`} className="flex flex-col items-center gap-1 flex-shrink-0">
+          <PlayerAvatar
+            name={p.name}
+            initials={p.initials}
+            color={p.color}
+            avatarUrl={p.avatar_url}
+            frame={p.active_frame}
+            size="lg"
+          />
+          <span className="font-sans text-[10px] text-green-mid">{p.name.split(' ')[0]}</span>
+        </Link>
+      ))}
+    </div>
   )
 }
 
-function PlayerListItem({ p }: { p: Player }) {
+// ─── Rounds feed ─────────────────────────────────────────────────────────────
+function RoundsFeed() {
+  const { data: rounds, isLoading } = useAllPersonalRounds()
+
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        {[1, 2, 3].map((i) => <div key={i} className="h-16 bg-green-pale/50 rounded-xl animate-pulse" />)}
+      </div>
+    )
+  }
+
+  if (!rounds?.length) {
+    return (
+      <p className="font-serif italic text-green-mid text-sm text-center py-6">
+        No rounds logged yet.
+      </p>
+    )
+  }
+
   return (
-    <Link
-      to={`/players/${p.id}`}
-      className="flex items-center gap-3 px-4 py-3 bg-white rounded-2xl border border-green-pale shadow-card hover:shadow-md active:scale-[0.99] transition-all"
-    >
-      <PlayerAvatar name={p.name} initials={p.initials} color={p.color}
-        avatarUrl={p.avatar_url} frame={p.active_frame} size="md" />
-      <div className="flex-1 min-w-0">
-        <p className="font-serif text-base text-green-dark leading-tight">{p.name}</p>
-        {p.active_title ? (
-          <p className="font-sans text-xs text-gold italic truncate">&ldquo;{p.active_title}&rdquo;</p>
-        ) : p.home_course ? (
-          <p className="font-sans text-xs text-green-mid truncate">{p.home_course}</p>
-        ) : (
-          <p className="font-sans text-xs text-green-mid/50 italic">No title</p>
-        )}
-      </div>
-      <div className="flex-shrink-0 text-right">
-        <p className="font-serif text-base text-gold font-bold leading-none">{p.bagal_bucks.toLocaleString()}</p>
-        <p className="font-sans text-[10px] uppercase tracking-wide text-green-mid/60">BB</p>
-      </div>
-    </Link>
+    <div className="space-y-2">
+      {rounds.map((r) => {
+        const overUnder = r.score != null && r.par != null ? r.score - r.par : null
+        return (
+          <Card key={r.id} className="px-4 py-3 flex items-start gap-3">
+            <Link to={`/players/${r.players.id}`} className="flex-shrink-0 mt-0.5">
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center font-sans text-xs font-bold text-white"
+                style={{ backgroundColor: r.players.color }}
+              >
+                {r.players.initials}
+              </div>
+            </Link>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-2">
+                <p className="font-serif text-sm text-green-dark">{r.course}</p>
+                <p className="font-sans text-[11px] text-green-mid/60 flex-shrink-0">{r.date}</p>
+              </div>
+              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                <span className="font-sans text-[11px] text-green-mid">{r.players.name}</span>
+                {r.score != null && (
+                  <span className="font-sans text-[11px] font-semibold text-green-dark">
+                    {r.score}
+                    {overUnder != null && (
+                      <span className="font-normal text-green-mid">
+                        {' '}({overUnder > 0 ? `+${overUnder}` : overUnder})
+                      </span>
+                    )}
+                  </span>
+                )}
+                {r.course_rating != null && r.course_rating > 0 && (
+                  <StarRating value={r.course_rating} />
+                )}
+              </div>
+              {r.notes && (
+                <p className="font-sans text-xs text-green-mid/60 italic mt-0.5 truncate">{r.notes}</p>
+              )}
+            </div>
+          </Card>
+        )
+      })}
+    </div>
   )
 }
 
+// ─── Bucket list ──────────────────────────────────────────────────────────────
+function BucketList() {
+  const { data: courses } = useProspectCourses()
+  const { profile } = useAuth()
+  const { data: players } = usePlayers()
+  const addCourse = useAddProspectCourse()
+  const deleteCourse = useDeleteProspectCourse()
+
+  const [adding, setAdding] = useState(false)
+  const [name, setName] = useState('')
+  const [location, setLocation] = useState('')
+  const [notes, setNotes] = useState('')
+
+  const myPlayerId = profile?.player_id
+
+  async function handleAdd() {
+    if (!name.trim() || !myPlayerId) return
+    await addCourse.mutateAsync({
+      playerId: myPlayerId,
+      name: name.trim(),
+      location: location.trim() || null,
+      notes: notes.trim() || null,
+    })
+    setName(''); setLocation(''); setNotes(''); setAdding(false)
+  }
+
+  return (
+    <div>
+      {!courses?.length && (
+        <p className="font-serif italic text-green-mid text-sm text-center py-4">
+          No courses on the list yet.
+        </p>
+      )}
+
+      <div className="space-y-2 mb-3">
+        {courses?.map((c) => {
+          const suggester = players?.find(p => p.id === c.player_id)
+          const canDelete = myPlayerId === c.player_id || profile?.role === 'admin'
+          return (
+            <Card key={c.id} className="px-4 py-3 flex items-start gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="font-serif text-sm text-green-dark">{c.name}</p>
+                {c.location && (
+                  <p className="font-sans text-xs text-green-mid">{c.location}</p>
+                )}
+                {c.notes && (
+                  <p className="font-sans text-xs text-green-mid/70 italic mt-0.5">{c.notes}</p>
+                )}
+                {suggester && (
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                    <div
+                      className="w-4 h-4 rounded-full flex items-center justify-center font-sans text-[8px] font-bold text-white flex-shrink-0"
+                      style={{ backgroundColor: suggester.color }}
+                    >
+                      {suggester.initials}
+                    </div>
+                    <span className="font-sans text-[10px] text-green-mid/60">{suggester.name}</span>
+                  </div>
+                )}
+              </div>
+              {canDelete && (
+                <button
+                  onClick={() => deleteCourse.mutate(c.id)}
+                  className="font-sans text-xs text-green-mid/40 hover:text-red-500 transition-colors flex-shrink-0 mt-0.5"
+                >
+                  ✕
+                </button>
+              )}
+            </Card>
+          )
+        })}
+      </div>
+
+      {myPlayerId && !adding && (
+        <button onClick={() => setAdding(true)} className="btn-ghost text-sm w-full">
+          + Add a course
+        </button>
+      )}
+
+      {adding && (
+        <Card className="p-4 space-y-3">
+          <div>
+            <label className="field-label">Course name</label>
+            <input className="field-input text-sm" placeholder="e.g. Augusta National"
+              value={name} onChange={e => setName(e.target.value)} />
+          </div>
+          <div>
+            <label className="field-label">Location (optional)</label>
+            <input className="field-input text-sm" placeholder="e.g. Augusta, Georgia"
+              value={location} onChange={e => setLocation(e.target.value)} />
+          </div>
+          <div>
+            <label className="field-label">Notes (optional)</label>
+            <input className="field-input text-sm" placeholder="e.g. Saw it on YouTube, looks insane"
+              value={notes} onChange={e => setNotes(e.target.value)} />
+          </div>
+          {addCourse.isError && (
+            <p className="font-sans text-xs text-red-600">{String(addCourse.error)}</p>
+          )}
+          <div className="flex gap-2">
+            <button onClick={handleAdd} disabled={!name.trim() || addCourse.isPending} className="btn-primary text-sm flex-1">
+              {addCourse.isPending ? 'Adding…' : 'Add'}
+            </button>
+            <button onClick={() => setAdding(false)} className="btn-ghost text-sm">Cancel</button>
+          </div>
+        </Card>
+      )}
+    </div>
+  )
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 export function PlayersPage() {
   const { data: players, isLoading } = usePlayers()
-  const [sortKey, setSortKey] = useState<SortKey>('name')
-  const [viewMode, setViewMode] = useState<ViewMode>('list')
 
-  const sorted = useMemo(() => sortPlayers(players ?? [], sortKey), [players, sortKey])
+  if (isLoading) {
+    return (
+      <div className="p-4 pt-2 space-y-2">
+        {[1, 2, 3].map((i) => <div key={i} className="h-16 bg-green-pale/50 rounded-xl animate-pulse" />)}
+      </div>
+    )
+  }
+
+  if (!players?.length) {
+    return (
+      <div className="p-4 pt-2">
+        <EmptyState message="No players yet" hint="An admin will set up the player profiles." />
+      </div>
+    )
+  }
 
   return (
     <div className="p-4 pt-2">
-      {!isLoading && !!players?.length && (
-        <div className="flex items-center justify-between mb-3 gap-2">
-          <div className="flex gap-1.5">
-            {(['name', 'bucks'] as SortKey[]).map((k) => (
-              <button key={k} onClick={() => setSortKey(k)}
-                className={[
-                  'font-sans text-xs font-semibold px-3 py-1.5 rounded-full border transition-all',
-                  sortKey === k
-                    ? 'bg-green-dark text-cream border-green-dark'
-                    : 'bg-white text-green-mid border-green-pale hover:border-green-mid',
-                ].join(' ')}
-              >
-                {k === 'name' ? 'A–Z' : 'Most BB'}
-              </button>
-            ))}
-          </div>
-          <div className="flex gap-1 bg-green-pale/50 rounded-full p-0.5">
-            <button onClick={() => setViewMode('list')} aria-label="List view"
-              className={['font-sans text-xs px-2.5 py-1 rounded-full transition-all',
-                viewMode === 'list' ? 'bg-white text-green-dark shadow-sm' : 'text-green-mid'].join(' ')}>
-              ☰
-            </button>
-            <button onClick={() => setViewMode('card')} aria-label="Card view"
-              className={['font-sans text-xs px-2.5 py-1 rounded-full transition-all',
-                viewMode === 'card' ? 'bg-white text-green-dark shadow-sm' : 'text-green-mid'].join(' ')}>
-              ⊞
-            </button>
-          </div>
-        </div>
-      )}
-
-      {isLoading ? (
-        <div className="space-y-2">
-          {[1, 2, 3].map((i) => <div key={i} className="h-16 bg-green-pale/50 rounded-2xl animate-pulse" />)}
-        </div>
-      ) : !sorted.length ? (
-        <EmptyState message="No players yet" hint="An admin will set up the player profiles." />
-      ) : viewMode === 'list' ? (
-        <div className="space-y-2">
-          {sorted.map((p) => <PlayerListItem key={p.id} p={p} />)}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {sorted.map((p) => <PlayerCard key={p.id} p={p} />)}
-        </div>
-      )}
+      <PlayerRow />
+      <SectionLabel>Recent rounds</SectionLabel>
+      <RoundsFeed />
+      <SectionLabel>Bucket list</SectionLabel>
+      <BucketList />
     </div>
   )
 }
