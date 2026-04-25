@@ -491,7 +491,7 @@ function ComparePanel({ profilePlayerId, myPlayerId }: { profilePlayerId: string
   const them = players.find(p => p.id === profilePlayerId)
 
   // Round-level stats (all rounds)
-  function roundStats(scores: typeof myScores) {
+  function roundStats(scores: NonNullable<typeof myScores>) {
     const all = scores.map(s => s.gross_score)
     if (!all.length) return { best: null, worst: null, avg: null }
     return {
@@ -502,7 +502,7 @@ function ComparePanel({ profilePlayerId, myPlayerId }: { profilePlayerId: string
   }
 
   // Tournament-level stats (round 1 only has position)
-  function tourneyStats(scores: typeof myScores) {
+  function tourneyStats(scores: NonNullable<typeof myScores>) {
     const t1 = scores.filter(s => s.round_number === 1 && s.position != null)
     return {
       wins:   t1.filter(s => s.position === 1).length,
