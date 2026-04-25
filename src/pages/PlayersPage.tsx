@@ -27,6 +27,7 @@ function PlayerRow() {
             size="lg"
           />
           <span className="font-sans text-[10px] text-green-mid">{p.name.split(' ')[0]}</span>
+          <span className="font-sans text-[10px] font-bold text-gold">{p.bagal_bucks.toLocaleString()} BB</span>
         </Link>
       ))}
     </div>
