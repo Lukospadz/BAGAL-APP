@@ -16,7 +16,7 @@ interface AuthContextValue {
   loading: boolean
   isAdmin: boolean
   isPlayer: boolean
-  signInWithEmail: (email: string) => Promise<{ error: string | null }>
+  signInWithPassword: (email: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
 }
 
@@ -62,13 +62,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false)
   }
 
-  async function signInWithEmail(email: string): Promise<{ error: string | null }> {
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: window.location.origin,
-      },
-    })
+  async function signInWithPassword(email: string, password: string): Promise<{ error: string | null }> {
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
     return { error: error?.message ?? null }
   }
 
@@ -85,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         isAdmin: profile?.role === 'admin',
         isPlayer: profile !== null,
-        signInWithEmail,
+        signInWithPassword,
         signOut,
       }}
     >
