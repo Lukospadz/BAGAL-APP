@@ -1,14 +1,15 @@
 import { HTMLAttributes } from 'react'
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'tinted'
+  variant?: 'default' | 'tinted' | 'dark'
 }
 
 export function Card({ variant = 'default', className = '', ...props }: CardProps) {
-  const base = 'rounded-2xl border border-green-pale/70 shadow-card backdrop-blur-[2px]'
+  const base = 'rounded-xl border shadow-card'
   const variants = {
-    default: 'bg-white/95',
-    tinted:  'bg-green-faint/85',
+    default: 'bg-white border-bone',
+    tinted:  'bg-cream/80 border-bone',
+    dark:    'bg-green-dark border-green-mid/20',
   }
   return (
     <div

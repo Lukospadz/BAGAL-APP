@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <rect width="192" height="192" rx="38" fill="#1A3A2B"/>
+  <!-- Subtle gold glow -->
+  <circle cx="96" cy="96" r="72" fill="none" stroke="#A8822A" stroke-width="0.5" opacity="0.3"/>
+  <!-- Flag pin -->
+  <line x1="72" y1="34" x2="72" y2="148" stroke="#A8822A" stroke-width="6" stroke-linecap="round"/>
+  <!-- Flag -->
+  <path d="M72 34 L128 56 L72 78 Z" fill="#A8822A"/>
+  <!-- Golf ball -->
+  <circle cx="120" cy="148" r="22" fill="#F5F0E8"/>
+  <circle cx="113" cy="142" r="2.5" fill="#C5D9CD" opacity="0.7"/>
+  <circle cx="122" cy="138" r="2.5" fill="#C5D9CD" opacity="0.7"/>
+  <circle cx="129" cy="146" r="2.5" fill="#C5D9CD" opacity="0.7"/>
+  <circle cx="118" cy="153" r="2.5" fill="#C5D9CD" opacity="0.7"/>
+</svg>

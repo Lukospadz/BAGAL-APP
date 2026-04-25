@@ -4,8 +4,8 @@
 
 /* ── Avatar frame animations ─────────────────────────────────────────── */
 @keyframes frame-gold {
-  0%, 100% { box-shadow: 0 0 0 3px #d4a520, 0 0 14px 3px rgba(212,165,32,0.55); }
-  50%      { box-shadow: 0 0 0 3px #f5d970, 0 0 22px 6px rgba(245,217,112,0.80); }
+  0%, 100% { box-shadow: 0 0 0 3px #A8822A, 0 0 14px 3px rgba(168,130,42,0.55); }
+  50%      { box-shadow: 0 0 0 3px #D4AE5C, 0 0 22px 6px rgba(212,174,92,0.80); }
 }
 @keyframes frame-ice {
   0%, 100% { box-shadow: 0 0 0 3px #67e8f9, 0 0 12px 3px rgba(103,232,249,0.50); }
@@ -53,15 +53,6 @@
   font-variation-settings: 'opsz' 144, 'SOFT' 100;
 }
 
-/* ── Background scene ────────────────────────────────────────────────── */
-.bg-scene {
-  background:
-    linear-gradient(180deg, #fbf8f1 0%, #f0e9d8 45%, #dbe7c5 100%);
-  position: relative;
-}
-
-/* Fixed SVG hill layer placed via a div in PublicLayout */
-
 @layer base {
   html {
     @apply antialiased;
@@ -70,7 +61,9 @@
     @apply text-green-dark font-sans;
     font-family: 'Space Grotesk', system-ui, sans-serif;
     min-height: 100dvh;
-    background: #fbf8f1;
+    background-color: #F5F0E8;
+    /* Subtle paper/linen noise texture */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
   }
 
   h1, h2, h3 {
@@ -82,13 +75,13 @@
 @layer components {
   /* Form fields */
   .field-label {
-    @apply block text-[11px] font-sans font-semibold tracking-wide uppercase text-green-mid mb-1;
+    @apply block text-[11px] font-sans font-semibold tracking-[0.12em] uppercase text-green-mid/80 mb-1;
   }
 
   .field-input {
-    @apply w-full px-3.5 py-2.5 border border-green-pale rounded-xl text-sm font-sans
+    @apply w-full px-3.5 py-2.5 border border-bone rounded-xl text-sm font-sans
            bg-white text-green-dark placeholder:text-green-mid/40
-           focus:outline-none focus:ring-2 focus:ring-green-light/40 focus:border-green-light
+           focus:outline-none focus:ring-2 focus:ring-green-light/30 focus:border-green-light
            transition-colors;
   }
   .field-select { @apply field-input pr-9; }
@@ -97,22 +90,22 @@
   .btn-primary {
     @apply inline-flex items-center justify-center gap-1.5
            bg-green-dark text-cream font-sans text-sm font-semibold
-           px-4 py-2.5 rounded-full border border-green-dark
+           px-5 py-2.5 rounded-full border border-green-dark
            hover:bg-green-mid hover:shadow-pop active:scale-[0.97]
            transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-accent {
     @apply inline-flex items-center justify-center gap-1.5
            bg-coral text-white font-sans text-sm font-semibold
-           px-4 py-2.5 rounded-full border border-coral
+           px-5 py-2.5 rounded-full border border-coral
            hover:bg-coral-dark hover:shadow-pop active:scale-[0.97]
            transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-1.5
            bg-white text-green-dark font-sans text-sm font-medium
-           px-4 py-2 rounded-full border border-green-pale
-           hover:bg-green-faint active:scale-[0.97]
+           px-4 py-2 rounded-full border border-bone
+           hover:bg-cream active:scale-[0.97]
            transition-all duration-150;
   }
   .btn-danger {
@@ -128,7 +121,7 @@
     @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5
            font-sans text-[11px] font-semibold tracking-wide;
   }
-  .chip-gold { @apply chip bg-gold-faint text-[#8a6d0e] border border-gold/40; }
+  .chip-gold  { @apply chip bg-gold-faint text-[#7A5E1A] border border-gold/40; }
   .chip-green { @apply chip bg-green-faint text-green-dark border border-green-pale; }
   .chip-coral { @apply chip bg-coral/10 text-coral-dark border border-coral/30; }
 }

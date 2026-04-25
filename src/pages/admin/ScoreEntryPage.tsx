@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useTournament } from '@/hooks/useTournaments'
 import { usePlayers } from '@/hooks/usePlayers'
 import { useScoresByTournament, useUpsertScores, useDeleteTournamentScores } from '@/hooks/useScores'
-import { useSeason } from '@/hooks/useSeasons'
+import { useSettleTournamentBets } from '@/hooks/useProps'
 import { computeTournamentPositions } from '@/lib/scoring'
 import { StarRating } from '@/components/ui/StarRating'
 import { Card } from '@/components/ui/Card'
@@ -15,11 +15,11 @@ export function ScoreEntryPage() {
   const navigate = useNavigate()
 
   const { data: tournament } = useTournament(tournamentId)
-  const { data: season } = useSeason(seasonId)
   const { data: players } = usePlayers()
   const { data: existingScores } = useScoresByTournament(tournamentId)
   const upsertScores = useUpsertScores()
   const deleteScores = useDeleteTournamentScores()
+  const settleBets = useSettleTournamentBets()
 
   const rounds = tournament?.rounds ?? 1
 
@@ -101,13 +101,16 @@ export function ScoreEntryPage() {
       entries,
     })
 
-    navigate(`/admin/seasons/${seasonId}`)
+    // Settle any open prop bets now that results are known
+    await settleBets.mutateAsync(tournament.id)
+
+    navigate('/admin/seasons')
   }
 
   async function handleDelete() {
     if (!confirm('Delete all scores for this tournament and mark it as upcoming again?')) return
     await deleteScores.mutateAsync({ tournamentId: tournamentId!, seasonId: seasonId! })
-    navigate(`/admin/seasons/${seasonId}`)
+    navigate('/admin/seasons')
   }
 
   if (!tournament || !players) {
@@ -117,8 +120,8 @@ export function ScoreEntryPage() {
   return (
     <div>
       <div className="mb-1">
-        <Link to={`/admin/seasons/${seasonId}`} className="font-sans text-xs text-green-mid hover:underline">
-          ← Back to {season?.name ?? 'season'}
+        <Link to="/admin/seasons" className="font-sans text-xs text-green-mid hover:underline">
+          ← Back to seasons
         </Link>
       </div>
       <h2 className="font-serif text-xl text-green-dark mb-4">{tournament.name} — Scores</h2>

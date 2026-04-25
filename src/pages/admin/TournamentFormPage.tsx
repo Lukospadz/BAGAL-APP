@@ -102,7 +102,7 @@ export function TournamentFormPage() {
         bucks_awarded:  false,
       })
     }
-    navigate(`/admin/seasons/${seasonId}`)
+    navigate('/admin/seasons')
   })
 
   const saving = createTournament.isPending || updateTournament.isPending
@@ -112,10 +112,10 @@ export function TournamentFormPage() {
     <div>
       <div className="mb-1">
         <Link
-          to={`/admin/seasons/${seasonId}`}
+          to="/admin/seasons"
           className="font-sans text-xs text-green-mid hover:underline"
         >
-          ← Back to season
+          ← Back to seasons
         </Link>
       </div>
       <h2 className="font-serif text-xl text-green-dark mb-4">

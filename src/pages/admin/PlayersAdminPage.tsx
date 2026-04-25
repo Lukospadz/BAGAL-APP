@@ -6,6 +6,7 @@ import { usePlayers, useCreatePlayer, useUpdatePlayer, useDeletePlayer } from '@
 import { useAdminResetPlayerBucks } from '@/hooks/useBucks'
 import { PlayerAvatar } from '@/components/ui/PlayerAvatar'
 import { Card } from '@/components/ui/Card'
+import { ConfirmButton } from '@/components/ui/ConfirmButton'
 import type { Player } from '@/types/db'
 
 const PRESET_COLORS = [
@@ -20,100 +21,6 @@ const playerSchema = z.object({
 })
 type FormValues = z.infer<typeof playerSchema>
 
-// ─── Player Form (self-contained, handles own mutations) ──────────────────────
-
-function CreatePlayerForm({ onDone }: { onDone: () => void }) {
-  const createPlayer = useCreatePlayer()
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormValues>({
-    resolver: zodResolver(playerSchema),
-    defaultValues: { color: '#185FA5' },
-  })
-  const selectedColor = watch('color')
-
-  const onSubmit = handleSubmit(async (data) => {
-    await createPlayer.mutateAsync({
-      name: data.name,
-      initials: data.initials,
-      color: data.color,
-      handicap: data.handicap ?? null,
-      avatar_url: null,
-      bio: null,
-      home_course: null,
-      bag: [],
-      bagal_bucks: 0,
-      active_title: null,
-      active_frame: null,
-    })
-    onDone()
-  })
-
-  return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <PlayerFormFields
-        register={register}
-        errors={errors}
-        selectedColor={selectedColor}
-        setValue={setValue}
-      />
-      <div className="flex gap-2 pt-2">
-        <button type="submit" disabled={createPlayer.isPending} className="btn-primary">
-          {createPlayer.isPending ? 'Saving…' : 'Save player'}
-        </button>
-        <button type="button" onClick={onDone} className="btn-ghost">Cancel</button>
-      </div>
-      {createPlayer.isError && (
-        <p className="text-xs text-red-600">{String(createPlayer.error)}</p>
-      )}
-    </form>
-  )
-}
-
-function EditPlayerForm({ player, onDone }: { player: Player; onDone: () => void }) {
-  const updatePlayer = useUpdatePlayer()
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormValues>({
-    resolver: zodResolver(playerSchema),
-    defaultValues: {
-      name: player.name,
-      initials: player.initials,
-      color: player.color,
-      handicap: player.handicap ?? undefined,
-    },
-  })
-  const selectedColor = watch('color')
-
-  const onSubmit = handleSubmit(async (data) => {
-    await updatePlayer.mutateAsync({
-      id: player.id,
-      name: data.name,
-      initials: data.initials,
-      color: data.color,
-      handicap: data.handicap ?? null,
-    })
-    onDone()
-  })
-
-  return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <PlayerFormFields
-        register={register}
-        errors={errors}
-        selectedColor={selectedColor}
-        setValue={setValue}
-      />
-      <div className="flex gap-2 pt-2">
-        <button type="submit" disabled={updatePlayer.isPending} className="btn-primary">
-          {updatePlayer.isPending ? 'Saving…' : 'Save changes'}
-        </button>
-        <button type="button" onClick={onDone} className="btn-ghost">Cancel</button>
-      </div>
-      {updatePlayer.isError && (
-        <p className="text-xs text-red-600">{String(updatePlayer.error)}</p>
-      )}
-    </form>
-  )
-}
-
-// Shared field layout
 function PlayerFormFields({
   register,
   errors,
@@ -126,7 +33,7 @@ function PlayerFormFields({
   setValue: ReturnType<typeof useForm<FormValues>>['setValue']
 }) {
   return (
-    <>
+    <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
           <label className="field-label">Name</label>
@@ -140,14 +47,8 @@ function PlayerFormFields({
         </div>
         <div>
           <label className="field-label">Handicap (optional)</label>
-          <input
-            type="number"
-            step="0.1"
-            min="0"
-            max="54"
-            className="field-input"
-            {...register('handicap', { valueAsNumber: true })}
-          />
+          <input type="number" step="0.1" min="0" max="54" className="field-input"
+            {...register('handicap', { valueAsNumber: true })} />
         </div>
       </div>
 
@@ -155,10 +56,7 @@ function PlayerFormFields({
         <label className="field-label">Avatar colour</label>
         <div className="flex flex-wrap gap-2 mt-1">
           {PRESET_COLORS.map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => setValue('color', c)}
+            <button key={c} type="button" onClick={() => setValue('color', c)}
               className="w-8 h-8 rounded-full border-2 transition-transform hover:scale-110"
               style={{
                 backgroundColor: c,
@@ -168,76 +66,93 @@ function PlayerFormFields({
               aria-label={c}
             />
           ))}
-          <input
-            type="color"
-            className="w-8 h-8 rounded cursor-pointer border border-green-pale"
-            {...register('color')}
-          />
+          <input type="color" className="w-8 h-8 rounded cursor-pointer border border-green-pale"
+            {...register('color')} />
         </div>
-        {errors.color && <p className="text-xs text-red-600 mt-1">{errors.color.message}</p>}
       </div>
-    </>
+    </div>
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+function PlayerInlineForm({ existing, onDone }: { existing?: Player; onDone: () => void }) {
+  const createPlayer = useCreatePlayer()
+  const updatePlayer = useUpdatePlayer()
+
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormValues>({
+    resolver: zodResolver(playerSchema),
+    defaultValues: existing
+      ? { name: existing.name, initials: existing.initials, color: existing.color, handicap: existing.handicap ?? undefined }
+      : { color: '#185FA5' },
+  })
+
+  const selectedColor = watch('color')
+
+  const onSubmit = handleSubmit(async (data) => {
+    if (existing) {
+      await updatePlayer.mutateAsync({
+        id: existing.id,
+        name: data.name, initials: data.initials,
+        color: data.color, handicap: data.handicap ?? null,
+      })
+    } else {
+      await createPlayer.mutateAsync({
+        name: data.name, initials: data.initials, color: data.color,
+        handicap: data.handicap ?? null, avatar_url: null, bio: null,
+        home_course: null, bag: [], bagal_bucks: 0,
+        active_title: null, active_frame: null,
+      })
+    }
+    onDone()
+  })
+
+  const saving = createPlayer.isPending || updatePlayer.isPending
+  const error  = createPlayer.error ?? updatePlayer.error
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-3">
+      <PlayerFormFields register={register} errors={errors} selectedColor={selectedColor} setValue={setValue} />
+      {error && <p className="text-xs text-red-600">{String(error)}</p>}
+      <div className="flex gap-2 pt-1">
+        <button type="submit" disabled={saving} className="btn-primary text-sm">
+          {saving ? 'Saving…' : existing ? 'Save changes' : 'Add player'}
+        </button>
+        <button type="button" onClick={onDone} className="btn-ghost text-sm">Cancel</button>
+      </div>
+    </form>
+  )
+}
 
 export function PlayersAdminPage() {
   const { data: players, isLoading } = usePlayers()
   const deletePlayer = useDeletePlayer()
-  const resetBucks = useAdminResetPlayerBucks()
-  const [mode, setMode] = useState<'list' | 'create' | { edit: Player }>('list')
+  const resetBucks   = useAdminResetPlayerBucks()
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [expandedId, setExpandedId]   = useState<string | null>(null)
 
-  async function handleDelete(player: Player) {
-    if (!confirm(`Delete ${player.name}? This cannot be undone.`)) return
-    await deletePlayer.mutateAsync(player.id)
-  }
-
-  async function handleResetBucks(player: Player) {
-    if (
-      !confirm(
-        `Reset ${player.name}'s BAGAL Bucks?\n\nThis wipes their balance to 0, removes every shop item they own, clears their equipped title/frame, and deletes their transaction history. Cannot be undone.`,
-      )
-    )
-      return
-    await resetBucks.mutateAsync(player.id)
-  }
-
-  if (mode === 'create') {
-    return (
-      <div>
-        <h2 className="font-serif text-xl text-green-dark mb-4">New player</h2>
-        <Card className="p-5 max-w-lg">
-          <CreatePlayerForm onDone={() => setMode('list')} />
-        </Card>
-      </div>
-    )
-  }
-
-  if (typeof mode === 'object' && 'edit' in mode) {
-    return (
-      <div>
-        <h2 className="font-serif text-xl text-green-dark mb-4">Edit {mode.edit.name}</h2>
-        <Card className="p-5 max-w-lg">
-          <EditPlayerForm player={mode.edit} onDone={() => setMode('list')} />
-        </Card>
-      </div>
-    )
+  function toggleExpand(id: string) {
+    setExpandedId(expandedId === id ? null : id)
   }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-serif text-xl text-green-dark">Players</h2>
-        <button onClick={() => setMode('create')} className="btn-primary">
-          + Add player
-        </button>
+        {!showAddForm && (
+          <button onClick={() => setShowAddForm(true)} className="btn-primary">+ Add player</button>
+        )}
       </div>
+
+      {showAddForm && (
+        <Card className="p-4 mb-3">
+          <p className="font-serif text-base text-green-dark mb-3">New player</p>
+          <PlayerInlineForm onDone={() => setShowAddForm(false)} />
+        </Card>
+      )}
 
       {isLoading ? (
         <div className="space-y-2">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-16 bg-green-pale/50 rounded-lg animate-pulse" />
+            <div key={i} className="h-16 bg-green-pale/50 rounded-2xl animate-pulse" />
           ))}
         </div>
       ) : !players?.length ? (
@@ -245,56 +160,52 @@ export function PlayersAdminPage() {
           <p className="font-serif italic text-green-mid">No players yet — add the first one.</p>
         </Card>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {players.map((p) => (
-            <Card key={p.id} className="p-4 flex items-center gap-3 flex-wrap">
-              <PlayerAvatar
-                name={p.name}
-                initials={p.initials}
-                color={p.color}
-                avatarUrl={p.avatar_url}
-                frame={p.active_frame}
-              />
-              <div className="flex-1 min-w-0">
-                <p className="font-serif text-base text-green-dark">{p.name}</p>
-                <p className="font-sans text-xs text-green-mid">
-                  {p.initials}
-                  {p.handicap != null ? ` · HCP ${p.handicap}` : ''}
-                  {' · '}
-                  <span className="text-gold font-semibold">
-                    {p.bagal_bucks.toLocaleString()} BB
-                  </span>
-                </p>
+            <div key={p.id} className="border border-green-pale rounded-2xl overflow-hidden bg-white">
+              <div className="flex items-center gap-3 px-4 py-3">
+                <PlayerAvatar name={p.name} initials={p.initials} color={p.color}
+                  avatarUrl={p.avatar_url} frame={p.active_frame} />
+                <div className="flex-1 min-w-0">
+                  <p className="font-serif text-base text-green-dark leading-tight">{p.name}</p>
+                  <p className="font-sans text-xs text-green-mid">
+                    {p.initials}
+                    {p.handicap != null ? ` · HCP ${p.handicap}` : ''}
+                    {' · '}
+                    <span className="text-gold font-semibold">{p.bagal_bucks.toLocaleString()} BB</span>
+                  </p>
+                </div>
+                <div className="flex gap-1.5 flex-shrink-0">
+                  <button onClick={() => toggleExpand(p.id)} className="btn-ghost text-xs py-1 px-2.5">
+                    {expandedId === p.id ? 'Cancel' : 'Edit'}
+                  </button>
+                  <ConfirmButton
+                    onConfirm={() => resetBucks.mutateAsync(p.id)}
+                    isPending={resetBucks.isPending}
+                    confirmLabel="Reset BB"
+                    className="font-sans text-xs py-1 px-2.5 rounded-lg border border-amber-300 text-amber-700 hover:bg-amber-50 transition-colors"
+                  >
+                    Reset BB
+                  </ConfirmButton>
+                  <ConfirmButton
+                    onConfirm={() => deletePlayer.mutateAsync(p.id)}
+                    isPending={deletePlayer.isPending}
+                    confirmLabel="Delete"
+                    className="btn-danger text-xs py-1 px-2"
+                  >
+                    Del
+                  </ConfirmButton>
+                </div>
               </div>
-              <div className="flex gap-2 flex-shrink-0 flex-wrap">
-                <button onClick={() => setMode({ edit: p })} className="btn-ghost text-xs py-1 px-3">
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleResetBucks(p)}
-                  disabled={resetBucks.isPending}
-                  className="btn-ghost text-xs py-1 px-3 border-amber-300 text-amber-700 hover:bg-amber-50"
-                >
-                  Reset BB
-                </button>
-                <button
-                  onClick={() => handleDelete(p)}
-                  disabled={deletePlayer.isPending}
-                  className="btn-danger text-xs py-1 px-3"
-                >
-                  Delete
-                </button>
-              </div>
-            </Card>
+
+              {expandedId === p.id && (
+                <div className="border-t border-green-pale px-4 py-4 bg-green-faint/40">
+                  <PlayerInlineForm existing={p} onDone={() => setExpandedId(null)} />
+                </div>
+              )}
+            </div>
           ))}
         </div>
-      )}
-
-      {deletePlayer.isError && (
-        <p className="mt-3 font-sans text-xs text-red-600">{String(deletePlayer.error)}</p>
-      )}
-      {resetBucks.isError && (
-        <p className="mt-3 font-sans text-xs text-red-600">{String(resetBucks.error)}</p>
       )}
     </div>
   )

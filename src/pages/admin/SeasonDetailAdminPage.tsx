@@ -95,6 +95,12 @@ export function SeasonDetailAdminPage() {
                     {t.status === 'completed' ? 'Edit scores' : 'Enter scores'}
                   </Link>
                   <Link
+                    to={`/admin/seasons/${seasonId}/tournaments/${t.id}/props`}
+                    className="btn-ghost text-xs py-1 px-3"
+                  >
+                    Props
+                  </Link>
+                  <Link
                     to={`/admin/seasons/${seasonId}/tournaments/${t.id}`}
                     className="btn-ghost text-xs py-1 px-3"
                   >

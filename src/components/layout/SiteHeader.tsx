@@ -7,14 +7,14 @@ export function SiteHeader() {
   const { data: season } = useActiveSeason()
 
   return (
-    <header className="relative z-10 px-4 pt-5 pb-3">
+    <header className="relative z-10 px-4 pt-6 pb-4 border-b border-bone/60 mb-2">
       <div className="flex items-center justify-between">
-        <Link to="/" className="flex items-baseline gap-2 group">
-          <span className="font-display text-[30px] font-bold tracking-tight text-green-dark leading-none group-hover:text-green-mid transition-colors">
+        <Link to="/" className="flex items-baseline gap-3 group">
+          <span className="font-display text-[34px] font-bold tracking-[-0.03em] text-green-dark leading-none group-hover:text-green-mid transition-colors">
             BAGAL
           </span>
           {season && (
-            <span className="chip-coral">
+            <span className="font-sans text-[10px] font-bold tracking-[0.15em] uppercase text-gold/90 border border-gold/30 bg-gold-faint px-2.5 py-1 rounded-full">
               {season.name}
             </span>
           )}
@@ -31,12 +31,15 @@ export function SiteHeader() {
               <Link to="/profile" className="btn-ghost text-xs py-1.5 px-3">
                 Profile
               </Link>
-              <button onClick={() => void signOut()} className="font-sans text-xs text-green-mid/70 hover:text-green-dark px-2">
+              <button
+                onClick={() => void signOut()}
+                className="font-sans text-xs text-green-mid/60 hover:text-green-dark px-2 transition-colors"
+              >
                 Sign out
               </button>
             </>
           ) : (
-            <Link to="/login" className="btn-primary text-xs py-1.5 px-3">
+            <Link to="/login" className="btn-primary text-xs py-1.5 px-4">
               Sign in
             </Link>
           )}

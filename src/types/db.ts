@@ -118,6 +118,39 @@ export interface PlayerItem {
   purchased_at: string
 }
 
+export type PropBetType =
+  | 'winner' | 'hole_in_one' | 'defend'
+  | 'personal_best' | 'big_margin' | 'tie_game' | 'close_finish'
+  | 'water_ball' | 'tilt' | 'front_nine_choke'
+  | 'duff_tee' | 'birdie' | 'multi_birdie' | 'lost_balls' | 'bunker_escape'
+  | 'snowman' | 'four_putt' | 'three_putt_18' | 'double_ob' | 'blade_chip' | 'skull_ob'
+  | 'custom'
+export type PropBetStatus = 'open' | 'settled' | 'voided'
+export type PlayerBetStatus = 'pending' | 'won' | 'lost' | 'voided'
+
+export interface PropBet {
+  id: string
+  tournament_id: string
+  type: PropBetType
+  description: string
+  target_player_id: string | null
+  odds: number
+  status: PropBetStatus
+  result: boolean | null
+  created_at: string
+}
+
+export interface PlayerBet {
+  id: string
+  prop_bet_id: string
+  player_id: string
+  amount: number
+  potential_payout: number
+  status: PlayerBetStatus
+  created_at: string
+  settled_at: string | null
+}
+
 export interface FavouriteCourse {
   id: string
   player_id: string
