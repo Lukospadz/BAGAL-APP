@@ -22,7 +22,7 @@ export function ResetPasswordPage() {
       setSaving(false)
       return
     }
-    await refreshProfile()
+    try { await refreshProfile() } catch (_) { /* ignore */ }
     navigate('/', { replace: true })
   }
 
